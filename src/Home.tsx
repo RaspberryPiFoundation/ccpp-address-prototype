@@ -1,3 +1,4 @@
+import { Alert } from './components/Alert'
 import { Button } from './components/Button'
 import { VARIANTS, type Variant } from './variants'
 
@@ -15,6 +16,18 @@ export function Home({ onSelect }: Props) {
           registration flow; only the address step differs. Pick one to try it.
         </p>
       </div>
+
+      <Alert variant="info" title="These flows are early prototypes">
+        <ul className="disclaimer-list">
+          <li>They exist to explore the venue-address experience — nothing you enter is saved.</li>
+          <li>
+            Only a handful of countries are available (United Kingdom, India, South Africa, United
+            States, Canada and Kenya).
+          </li>
+          <li>Country, subdivision and map data may be incomplete or inaccurate.</li>
+          <li>None of the copy, labels or help text has been reviewed and may change.</li>
+        </ul>
+      </Alert>
 
       <div className="variant-list">
         {VARIANTS.map((v) => (
