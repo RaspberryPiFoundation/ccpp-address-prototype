@@ -77,13 +77,24 @@ export function GoogleMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Keep a non-interactive preview centred on externally-updated coordinates.
+  // Re-centre when the coordinates prop changes from outside (a Places
+  // selection, "use my location", etc.). Skip if the map is already centred
+  // there — that means the change came from the user's own drag, and calling
+  // setCenter would fight the interaction.
   useEffect(() => {
-    if (mapRef.current && !interactive) {
-      mapRef.current.setCenter(coordinates)
-      setCenter(coordinates)
+    const map = mapRef.current
+    if (!map) return
+    const c = map.getCenter()
+    if (
+      c &&
+      Math.abs(c.lat() - coordinates.lat) < 1e-6 &&
+      Math.abs(c.lng() - coordinates.lng) < 1e-6
+    ) {
+      return
     }
-  }, [coordinates, interactive])
+    map.setCenter(coordinates)
+    setCenter(coordinates)
+  }, [coordinates])
 
   if (status === 'no-key' || status === 'error') {
     return (

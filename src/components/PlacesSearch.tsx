@@ -12,6 +12,8 @@ export interface PlaceSelection {
 
 interface PlacesSearchProps {
   onSelect: (selection: PlaceSelection) => void
+  /** ISO alpha-2 (lowercase) to limit predictions to; undefined = worldwide. */
+  countryCode?: string
 }
 
 /**
@@ -19,7 +21,7 @@ interface PlacesSearchProps {
  * full details (address components + geometry) from PlacesService, so the
  * selection re-centres the map and autofills the address form.
  */
-export function PlacesSearch({ onSelect }: PlacesSearchProps) {
+export function PlacesSearch({ onSelect, countryCode }: PlacesSearchProps) {
   const [query, setQuery] = useState('')
   const [predictions, setPredictions] = useState<google.maps.places.AutocompletePrediction[]>([])
   const [open, setOpen] = useState(false)
@@ -66,7 +68,12 @@ export function PlacesSearch({ onSelect }: PlacesSearchProps) {
     setOpen(true)
     debounceRef.current = window.setTimeout(() => {
       autocompleteRef.current!.getPlacePredictions(
-        { input: value, sessionToken: sessionRef.current ?? undefined },
+        {
+          input: value,
+          sessionToken: sessionRef.current ?? undefined,
+          // Limit predictions to the chosen country, when one is selected.
+          componentRestrictions: countryCode ? { country: countryCode } : undefined,
+        },
         (results, status) => {
           setLoading(false)
           const ok = status === google.maps.places.PlacesServiceStatus.OK && results

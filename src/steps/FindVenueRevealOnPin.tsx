@@ -19,9 +19,13 @@ interface Props {
   onChangeCountry: () => void
   onBack: () => void
   onContinue: () => void
+  /** True once a location has been established (search, map, or manual entry). */
+  locationSet: boolean
+  /** Escape hatch: reveal the fields to type the address by hand. */
+  onEnterManually: () => void
 }
 
-export function FindVenue({
+export function FindVenueRevealOnPin({
   data,
   coordinates,
   update,
@@ -31,6 +35,8 @@ export function FindVenue({
   onChangeCountry,
   onBack,
   onContinue,
+  locationSet,
+  onEnterManually,
 }: Props) {
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -108,88 +114,103 @@ export function FindVenue({
           <GoogleMap variant="preview" coordinates={coordinates} onEdit={onEditMap} />
         </div>
 
-        <hr className="divider" />
+        {/* The address section only appears once a location has been established. */}
+        {!locationSet && (
+          <div className="info-panel">
+            Search for your venue or set its location on the map to confirm the address.{' '}
+            <button type="button" className="link-button" onClick={onEnterManually}>
+              Or enter the address manually
+            </button>
+            .
+          </div>
+        )}
 
-        <h2 className="title-sm">Confirm the venue’s address</h2>
+        {locationSet && (
+          <>
+            <hr className="divider" />
 
-        <TextInput
-          id="addressLine1"
-          label="Address line 1"
-          value={data.address.addressLine1}
-          onChange={(v) => updateAddress({ addressLine1: v })}
-          error={errors.addressLine1}
-        />
-        <TextInput
-          id="addressLine2"
-          label={
-            <>
-              Address line 2 <span style={{ fontWeight: 400 }}>(optional)</span>
-            </>
-          }
-          value={data.address.addressLine2}
-          onChange={(v) => updateAddress({ addressLine2: v })}
-        />
-        <TextInput
-          id="townCity"
-          label="Village / Town / City"
-          value={data.address.townCity}
-          onChange={(v) => updateAddress({ townCity: v })}
-          error={errors.townCity}
-        />
-        <SubdivisionField
-          country={data.country}
-          value={data.address.county}
-          onChange={(v) => updateAddress({ county: v })}
-        />
-        <TextInput
-          id="postcode"
-          label="Postcode"
-          value={data.address.postcode}
-          onChange={(v) => updateAddress({ postcode: v })}
-          error={errors.postcode}
-        />
-        <TextInput
-          id="coordinates"
-          label="Coordinates (optional)"
-          hint={
-            <>
-              Your venue coordinates are useful if you cannot provide other information to locate
-              your venue. Find your coordinates using <strong>Google Maps</strong>.
-            </>
-          }
-          value={data.address.coordinates}
-          onChange={(v) => updateAddress({ coordinates: v })}
-        />
+            <h2 className="title-sm">Confirm the venue’s address</h2>
 
-        <hr className="divider" />
+            <TextInput
+              id="addressLine1"
+              label="Address line 1"
+              value={data.address.addressLine1}
+              onChange={(v) => updateAddress({ addressLine1: v })}
+              error={errors.addressLine1}
+            />
+            <TextInput
+              id="addressLine2"
+              label={
+                <>
+                  Address line 2 <span style={{ fontWeight: 400 }}>(optional)</span>
+                </>
+              }
+              value={data.address.addressLine2}
+              onChange={(v) => updateAddress({ addressLine2: v })}
+            />
+            <TextInput
+              id="townCity"
+              label="Village / Town / City"
+              value={data.address.townCity}
+              onChange={(v) => updateAddress({ townCity: v })}
+              error={errors.townCity}
+            />
+            <SubdivisionField
+              country={data.country}
+              value={data.address.county}
+              onChange={(v) => updateAddress({ county: v })}
+            />
+            <TextInput
+              id="postcode"
+              label="Postcode"
+              value={data.address.postcode}
+              onChange={(v) => updateAddress({ postcode: v })}
+              error={errors.postcode}
+            />
+            <TextInput
+              id="coordinates"
+              label="Coordinates (optional)"
+              hint={
+                <>
+                  Your venue coordinates are useful if you cannot provide other information to locate
+                  your venue. Find your coordinates using <strong>Google Maps</strong>.
+                </>
+              }
+              value={data.address.coordinates}
+              onChange={(v) => updateAddress({ coordinates: v })}
+            />
 
-        <TextArea
-          id="locationDescription"
-          label="Describe the location (optional)"
-          hint="If you’re struggling to locate your venue using the map or address information, add an explanation of where your venue is. Include nearby landmarks, road names, or anything that helps someone find your venue."
-          value={data.locationDescription}
-          onChange={(v) => update({ locationDescription: v })}
-          placeholder="e.g. Kibera Primary School, next to the water tower, off Ngong Road"
-        />
+            <hr className="divider" />
 
-        <Checkbox
-          id="permission"
-          label="I confirm I have permission to host a club at this venue."
-          checked={data.confirmedPermission}
-          onChange={(v) => update({ confirmedPermission: v })}
-          error={errors.permission}
-        />
+            <TextArea
+              id="locationDescription"
+              label="Describe the location (optional)"
+              hint="If you’re struggling to locate your venue using the map or address information, add an explanation of where your venue is. Include nearby landmarks, road names, or anything that helps someone find your venue."
+              value={data.locationDescription}
+              onChange={(v) => update({ locationDescription: v })}
+              placeholder="e.g. Kibera Primary School, next to the water tower, off Ngong Road"
+            />
 
-        <div className="info-panel">
-          We will use this address to verify your club and show it on your public profile.
-        </div>
+            <Checkbox
+              id="permission"
+              label="I confirm I have permission to host a club at this venue."
+              checked={data.confirmedPermission}
+              onChange={(v) => update({ confirmedPermission: v })}
+              error={errors.permission}
+            />
+
+            <div className="info-panel">
+              We will use this address to verify your club and show it on your public profile.
+            </div>
+          </>
+        )}
       </div>
 
       <div className="button-wrapper">
         <Button variant="secondary" icon={<ArrowBackIcon />} onClick={onBack}>
           Back
         </Button>
-        <Button variant="primary" onClick={handleContinue}>
+        <Button variant="primary" onClick={handleContinue} disabled={!locationSet}>
           Save and continue
         </Button>
       </div>

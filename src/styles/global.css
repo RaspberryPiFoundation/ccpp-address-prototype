@@ -472,6 +472,52 @@ textarea.input-box {
   background: var(--rpf-grey-300);
 }
 
+/* ---------------- Home / variant picker ---------------- */
+.variant-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.variant-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  border: 1px solid var(--rpf-grey-150);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+}
+.variant-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1;
+}
+.variant-card .btn {
+  flex-shrink: 0;
+}
+
+/* Wrapper for a running flow: stacks the banner above the card, centred. */
+.flow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+/* Variant banner shown above the card while a flow is running */
+.variant-banner {
+  width: 800px;
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+.variant-banner-title {
+  font-weight: var(--fw-bold);
+  color: var(--rpf-text-secondary);
+}
+
 /* Chosen country line */
 .chosen-country {
   font-weight: var(--fw-bold);
