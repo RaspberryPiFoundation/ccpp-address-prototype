@@ -9,6 +9,7 @@ import type { Coordinates } from './components/GoogleMap'
 import type { PlaceSelection } from './components/PlacesSearch'
 import { loadGoogleMaps, parseAddressComponents, formatCoordinates } from './lib/googleMaps'
 import { emptyApplication, type ApplicationData, type VenueAddress } from './types'
+import { capitalForCountry } from './data/reference'
 import { VARIANTS, type Variant } from './variants'
 
 interface Props {
@@ -31,7 +32,15 @@ export function Flow({ variant, onExit }: Props) {
 
   const info = VARIANTS.find((v) => v.id === variant)!
 
-  const update = (patch: Partial<ApplicationData>) => setData((d) => ({ ...d, ...patch }))
+  const update = (patch: Partial<ApplicationData>) => {
+    setData((d) => ({ ...d, ...patch }))
+    // Choosing a country centres the map pin on that country's capital city, so
+    // the venue step starts somewhere sensible before the user searches/drags.
+    if (patch.country) {
+      const capital = capitalForCountry(patch.country)
+      if (capital) setCoordinates(capital)
+    }
+  }
   const updateAddress = (patch: Partial<VenueAddress>) =>
     setData((d) => ({ ...d, address: { ...d.address, ...patch } }))
 

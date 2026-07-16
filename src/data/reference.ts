@@ -34,6 +34,24 @@ export function countryCodeForCountry(countryName: string): string | undefined {
   return NAME_TO_CODE.get(countryName)?.toLowerCase()
 }
 
+// Capital-city coordinates, keyed by ISO alpha-2. The dataset only carries a
+// country centroid, so we keep a small curated map to centre the map pin on the
+// capital when a country is chosen.
+const CAPITALS: Record<string, { lat: number; lng: number }> = {
+  GB: { lat: 51.5074, lng: -0.1278 }, // London
+  IN: { lat: 28.6139, lng: 77.209 }, // New Delhi
+  ZA: { lat: -25.7461, lng: 28.1881 }, // Pretoria
+  US: { lat: 38.9072, lng: -77.0369 }, // Washington, D.C.
+  CA: { lat: 45.4215, lng: -75.6972 }, // Ottawa
+  KE: { lat: -1.2921, lng: 36.8219 }, // Nairobi
+}
+
+// Capital-city coordinates for a country display name, or undefined if unknown.
+export function capitalForCountry(countryName: string): { lat: number; lng: number } | undefined {
+  const code = NAME_TO_CODE.get(countryName)
+  return code ? CAPITALS[code] : undefined
+}
+
 export const VENUE_TYPES = [
   'Library',
   'School',
