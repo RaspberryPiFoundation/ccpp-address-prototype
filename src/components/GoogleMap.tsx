@@ -9,17 +9,22 @@ export interface Coordinates {
 }
 
 // Tune which points of interest show, so venues relevant to a Code Club stand
-// out. Google groups POIs into a fixed set of categories: we keep the civic ones
+// out. Google groups POIs into a fixed set of categories. We keep the civic ones
 // (schools, places of worship, parks, and "government" — which covers libraries,
-// community centres and town halls) and hide commercial clutter.
+// community centres and town halls) at full prominence, and show the rest
+// "simplified" so they still appear but yield to the civic venues when labels
+// collide in busy areas.
 const POI_MAP_STYLES: google.maps.MapTypeStyle[] = [
-  { featureType: 'poi.business', stylers: [{ visibility: 'off' }] },
-  { featureType: 'poi.attraction', stylers: [{ visibility: 'off' }] },
-  { featureType: 'poi.sports_complex', stylers: [{ visibility: 'off' }] },
+  // Priority venues — full prominence.
   { featureType: 'poi.school', stylers: [{ visibility: 'on' }] },
   { featureType: 'poi.government', stylers: [{ visibility: 'on' }] },
   { featureType: 'poi.place_of_worship', stylers: [{ visibility: 'on' }] },
   { featureType: 'poi.park', stylers: [{ visibility: 'on' }] },
+  // Everything else — still shown, but de-emphasised.
+  { featureType: 'poi.business', stylers: [{ visibility: 'simplified' }] },
+  { featureType: 'poi.attraction', stylers: [{ visibility: 'simplified' }] },
+  { featureType: 'poi.medical', stylers: [{ visibility: 'simplified' }] },
+  { featureType: 'poi.sports_complex', stylers: [{ visibility: 'simplified' }] },
 ]
 
 interface GoogleMapProps {
