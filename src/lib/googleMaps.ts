@@ -89,6 +89,34 @@ export async function adrAddressForPlaceId(placeId: string): Promise<AdrAddress>
   }
 }
 
+export interface PlaceDetails {
+  venueName: string
+  address: AdrAddress
+  lat: number
+  lng: number
+}
+
+/**
+ * Fetches a place's name, location and adr address by place ID. Used when a user
+ * clicks a point of interest on the map.
+ */
+export async function placeDetailsById(placeId: string): Promise<PlaceDetails | null> {
+  try {
+    const google = await loadGoogleMaps()
+    const place = new google.maps.places.Place({ id: placeId })
+    await place.fetchFields({ fields: ['displayName', 'location', 'adrFormatAddress'] })
+    if (!place.location) return null
+    return {
+      venueName: place.displayName ?? '',
+      address: parseAdrAddress(place.adrFormatAddress),
+      lat: place.location.lat(),
+      lng: place.location.lng(),
+    }
+  } catch {
+    return null
+  }
+}
+
 export function formatCoordinates(lat: number, lng: number): string {
   return `${lat.toFixed(6)}, ${lng.toFixed(6)}`
 }

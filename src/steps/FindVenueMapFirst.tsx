@@ -8,6 +8,7 @@ import { AddressPinWarning } from '../components/AddressPinWarning'
 import { PinCountryWarning } from '../components/PinCountryWarning'
 import { ArrowBackIcon } from '../components/icons'
 import { countryCodeForCountry, isPostcodeRequired } from '../data/reference'
+import { placeDetailsById } from '../lib/googleMaps'
 import type { ApplicationData, VenueAddress } from '../types'
 
 interface Props {
@@ -88,6 +89,12 @@ export function FindVenueMapFirst({
     setCoords({ lat: sel.lat, lng: sel.lng })
   }
 
+  // Clicking a point of interest on the map fills its details and moves the pin.
+  const handlePoiSelect = async (placeId: string) => {
+    const details = await placeDetailsById(placeId)
+    if (details) handlePlace(details)
+  }
+
   const handleConfirmLocation = async () => {
     setConfirming(true)
     await onConfirmLocation(coords)
@@ -151,7 +158,8 @@ export function FindVenueMapFirst({
               <div className="label-wrapper">
                 <label>Find the venue on the map</label>
                 <span className="hint">
-                  Drag the map to move the pin to your venue, then confirm the location.
+                  Drag the map to move the pin, or tap a place on the map to select it, then confirm
+                  the location.
                 </span>
               </div>
               <GoogleMap
@@ -160,6 +168,7 @@ export function FindVenueMapFirst({
                 coordinates={coords}
                 interactive
                 onCoordinatesChange={setCoords}
+                onPoiSelect={handlePoiSelect}
               />
             </div>
 

@@ -52,7 +52,9 @@ export function Flow({ variant, onExit }: Props) {
     setLocationSet(true)
     setData((d) => ({
       ...d,
-      venueName: d.venueName || sel.venueName,
+      // Pre-populate the venue name from the selected place; keep the existing
+      // value only when the selection has no name of its own.
+      venueName: sel.venueName || d.venueName,
       address: {
         addressLine1: sel.address.addressLine1,
         addressLine2: sel.address.addressLine2,

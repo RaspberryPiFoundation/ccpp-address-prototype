@@ -8,6 +8,20 @@ export interface Coordinates {
   lng: number
 }
 
+// Tune which points of interest show, so venues relevant to a Code Club stand
+// out. Google groups POIs into a fixed set of categories: we keep the civic ones
+// (schools, places of worship, parks, and "government" — which covers libraries,
+// community centres and town halls) and hide commercial clutter.
+const POI_MAP_STYLES: google.maps.MapTypeStyle[] = [
+  { featureType: 'poi.business', stylers: [{ visibility: 'off' }] },
+  { featureType: 'poi.attraction', stylers: [{ visibility: 'off' }] },
+  { featureType: 'poi.sports_complex', stylers: [{ visibility: 'off' }] },
+  { featureType: 'poi.school', stylers: [{ visibility: 'on' }] },
+  { featureType: 'poi.government', stylers: [{ visibility: 'on' }] },
+  { featureType: 'poi.place_of_worship', stylers: [{ visibility: 'on' }] },
+  { featureType: 'poi.park', stylers: [{ visibility: 'on' }] },
+]
+
 interface GoogleMapProps {
   variant: 'preview' | 'full'
   coordinates: Coordinates
@@ -17,6 +31,8 @@ interface GoogleMapProps {
   onEdit?: () => void
   /** Reports load failure so parents can fall back to the manual form. */
   onLoadError?: () => void
+  /** When set, points of interest become clickable and report their place ID. */
+  onPoiSelect?: (placeId: string) => void
 }
 
 type Status = 'loading' | 'ready' | 'no-key' | 'error'
@@ -33,11 +49,16 @@ export function GoogleMap({
   onCoordinatesChange,
   onEdit,
   onLoadError,
+  onPoiSelect,
 }: GoogleMapProps) {
   const canvasRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<google.maps.Map | null>(null)
   const [status, setStatus] = useState<Status>('loading')
-  const [center, setCenter] = useState<Coordinates>(coordinates)
+
+  // Keep the latest POI handler in a ref so the once-only map listener isn't
+  // stuck with a stale closure.
+  const onPoiSelectRef = useRef(onPoiSelect)
+  onPoiSelectRef.current = onPoiSelect
 
   // Initialise the map once.
   useEffect(() => {
@@ -51,17 +72,25 @@ export function GoogleMap({
           disableDefaultUI: !interactive,
           gestureHandling: interactive ? 'greedy' : 'none',
           keyboardShortcuts: interactive,
-          clickableIcons: false,
-          mapId: 'DEMO_MAP_ID',
+          clickableIcons: !!onPoiSelect,
+          styles: POI_MAP_STYLES,
         })
         mapRef.current = map
 
         map.addListener('idle', () => {
           const c = map.getCenter()
           if (!c) return
-          const next = { lat: c.lat(), lng: c.lng() }
-          setCenter(next)
-          if (interactive) onCoordinatesChange?.(next)
+          if (interactive) onCoordinatesChange?.({ lat: c.lat(), lng: c.lng() })
+        })
+
+        // Clicking a point of interest reports its place ID and recentres the
+        // map on it so the pin lands on the POI.
+        map.addListener('click', (e: google.maps.MapMouseEvent | google.maps.IconMouseEvent) => {
+          const placeId = (e as google.maps.IconMouseEvent).placeId
+          if (!placeId) return
+          e.stop() // suppress the default POI info window
+          if (e.latLng) map.panTo(e.latLng)
+          onPoiSelectRef.current?.(placeId)
         })
 
         setStatus('ready')
@@ -93,7 +122,6 @@ export function GoogleMap({
       return
     }
     map.setCenter(coordinates)
-    setCenter(coordinates)
   }, [coordinates])
 
   if (status === 'no-key' || status === 'error') {
@@ -133,9 +161,6 @@ export function GoogleMap({
         <>
           <div className="gmap-pin">
             <PinIcon size={variant === 'full' ? 42 : 34} />
-          </div>
-          <div className="gmap-coords">
-            {center.lat.toFixed(5)}, {center.lng.toFixed(5)}
           </div>
           {variant === 'preview' && onEdit && (
             <button type="button" className="gmap-edit-button" onClick={onEdit}>
