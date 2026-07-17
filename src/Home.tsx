@@ -7,15 +7,17 @@ interface Props {
 }
 
 export function Home({ onSelect }: Props) {
-  // Only option C is shown for now; the other variants are hidden.
-  const visibleVariants = VARIANTS.filter((v) => v.id === 'confirm-button')
+  // Only the map-based options (C and D) are shown for now; the others are hidden.
+  const visibleVariants = VARIANTS.filter(
+    (v) => v.id === 'confirm-button' || v.id === 'search-first',
+  )
 
   return (
     <div className="card">
       <div className="intro">
-        <h1 className="title-lg">Venue address — prototype</h1>
+        <h1 className="title-lg">Venue address — prototypes</h1>
         <p className="body">
-          A prototype of the “Where is the club venue?” step. Select it below to try it.
+          Prototypes of the “Where is the club venue?” step. Pick one below to try it.
         </p>
       </div>
 
