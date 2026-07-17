@@ -4,10 +4,9 @@ import { TextInput, TextArea, Checkbox } from '../components/Fields'
 import { Button } from '../components/Button'
 import { GoogleMap, type Coordinates } from '../components/GoogleMap'
 import { PlacesSearch, type PlaceSelection } from '../components/PlacesSearch'
-import { SubdivisionField } from '../components/SubdivisionField'
 import { AddressPinWarning } from '../components/AddressPinWarning'
 import { ArrowBackIcon } from '../components/icons'
-import { countryCodeForCountry } from '../data/reference'
+import { countryCodeForCountry, isPostcodeRequired } from '../data/reference'
 import type { ApplicationData, VenueAddress } from '../types'
 
 interface Props {
@@ -41,7 +40,8 @@ export function FindVenue({
     if (!data.venueName.trim()) e.venueName = 'This field is required.'
     if (!data.address.addressLine1.trim()) e.addressLine1 = 'This field is required.'
     if (!data.address.municipality.trim()) e.municipality = 'This field is required.'
-    if (!data.address.postcode.trim()) e.postcode = 'This field is required.'
+    if (isPostcodeRequired(data.country) && !data.address.postcode.trim())
+      e.postcode = 'This field is required.'
     if (!data.confirmedPermission) e.permission = 'You must confirm you have permission.'
     setErrors(e)
     return Object.keys(e).length === 0
@@ -138,14 +138,27 @@ export function FindVenue({
           onChange={(v) => updateAddress({ municipality: v })}
           error={errors.municipality}
         />
-        <SubdivisionField
-          country={data.country}
+        <TextInput
+          id="administrativeArea"
+          label={
+            <>
+              County / state / province <span style={{ fontWeight: 400 }}>(optional)</span>
+            </>
+          }
           value={data.address.administrativeArea}
           onChange={(v) => updateAddress({ administrativeArea: v })}
         />
         <TextInput
           id="postcode"
-          label="Postcode"
+          label={
+            isPostcodeRequired(data.country) ? (
+              'Postcode'
+            ) : (
+              <>
+                Postcode <span style={{ fontWeight: 400 }}>(optional)</span>
+              </>
+            )
+          }
           value={data.address.postcode}
           onChange={(v) => updateAddress({ postcode: v })}
           error={errors.postcode}

@@ -9,7 +9,7 @@ import type { Coordinates } from './components/GoogleMap'
 import type { PlaceSelection } from './components/PlacesSearch'
 import { loadGoogleMaps, adrAddressForPlaceId, formatCoordinates } from './lib/googleMaps'
 import { emptyApplication, type ApplicationData, type VenueAddress } from './types'
-import { capitalForCountry, canonicalSubdivision } from './data/reference'
+import { capitalForCountry } from './data/reference'
 import { VARIANTS, type Variant } from './variants'
 
 interface Props {
@@ -57,7 +57,7 @@ export function Flow({ variant, onExit }: Props) {
         addressLine1: sel.address.addressLine1,
         addressLine2: sel.address.addressLine2,
         municipality: sel.address.municipality,
-        administrativeArea: canonicalSubdivision(d.country, sel.address.administrativeArea),
+        administrativeArea: sel.address.administrativeArea,
         postcode: sel.address.postcode,
         coordinates: formatCoordinates(sel.lat, sel.lng),
       },
@@ -84,7 +84,7 @@ export function Flow({ variant, onExit }: Props) {
             addressLine1: adr.addressLine1,
             addressLine2: adr.addressLine2,
             municipality: adr.municipality,
-            administrativeArea: canonicalSubdivision(d.country, adr.administrativeArea),
+            administrativeArea: adr.administrativeArea,
             postcode: adr.postcode,
             coordinates: formatCoordinates(c.lat, c.lng),
           },

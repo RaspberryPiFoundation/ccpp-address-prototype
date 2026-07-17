@@ -1,12 +1,8 @@
-// Country and subdivision reference data.
+// Country reference data.
 //
 // Sourced from https://github.com/countries/countries-data-json (MIT). The full
 // dataset covers 249 countries; `countries-data.json` here is a trimmed vendored
-// copy — country + subdivision {code, name} pairs — for the countries this
-// prototype supports. For the UK the four nations (England/Scotland/Wales/
-// Northern Ireland) are excluded from the subdivision list so it holds real
-// local authorities. Regenerate by re-running the extraction against the
-// upstream repo.
+// copy for the countries this prototype supports.
 import countriesData from './countries-data.json'
 
 interface CountryEntry {
@@ -14,46 +10,25 @@ interface CountryEntry {
   name: string
 }
 
-interface Subdivision {
-  code: string
-  name: string
-}
-
 const COUNTRY_ENTRIES = countriesData.countries as CountryEntry[]
-const SUBDIVISIONS = countriesData.subdivisions as Record<string, Subdivision[]>
 
 const NAME_TO_CODE = new Map(COUNTRY_ENTRIES.map((c) => [c.name, c.code]))
 
 // Country names for the country dropdown, alphabetically sorted.
 export const COUNTRIES = COUNTRY_ENTRIES.map((c) => c.name).sort((a, b) => a.localeCompare(b))
 
-function subdivisionsFor(countryName: string): Subdivision[] {
-  const code = NAME_TO_CODE.get(countryName)
-  return code ? (SUBDIVISIONS[code] ?? []) : []
-}
-
-// Subdivision names (counties / states / provinces / council areas) for a
-// country, looked up by its display name. Returns [] for an unknown country.
-export function subdivisionsForCountry(countryName: string): string[] {
-  return subdivisionsFor(countryName).map((s) => s.name)
-}
-
-// Normalise a subdivision value to the canonical full name. Google's adr address
-// often gives the ISO code (e.g. "CA" for California, "ON" for Ontario); match
-// on either code or name so the value lines up with the select options.
-export function canonicalSubdivision(countryName: string, value: string): string {
-  if (!value) return ''
-  const lower = value.trim().toLowerCase()
-  const match = subdivisionsFor(countryName).find(
-    (s) => s.name.toLowerCase() === lower || s.code.toLowerCase() === lower,
-  )
-  return match ? match.name : value
-}
-
 // ISO 3166-1 alpha-2 code (lowercase) for a country display name — the form
 // Google Places `componentRestrictions` expects. undefined if country unset.
 export function countryCodeForCountry(countryName: string): string | undefined {
   return NAME_TO_CODE.get(countryName)?.toLowerCase()
+}
+
+// Postcodes are only mandatory for countries where they're an essential part of
+// the address (UK and US here); optional everywhere else.
+const POSTCODE_REQUIRED_CODES = new Set(['gb', 'us'])
+export function isPostcodeRequired(countryName: string): boolean {
+  const code = countryCodeForCountry(countryName)
+  return code ? POSTCODE_REQUIRED_CODES.has(code) : false
 }
 
 // Capital-city coordinates, keyed by ISO alpha-2. The dataset only carries a

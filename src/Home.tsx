@@ -7,13 +7,15 @@ interface Props {
 }
 
 export function Home({ onSelect }: Props) {
+  // Only option C is shown for now; the other variants are hidden.
+  const visibleVariants = VARIANTS.filter((v) => v.id === 'confirm-button')
+
   return (
     <div className="card">
       <div className="intro">
-        <h1 className="title-lg">Venue address — prototype variants</h1>
+        <h1 className="title-lg">Venue address — prototype</h1>
         <p className="body">
-          Three implementations of the “Where is the club venue?” step. Each one starts the same
-          registration flow; only the address step differs. Pick one to try it.
+          A prototype of the “Where is the club venue?” step. Select it below to try it.
         </p>
       </div>
 
@@ -24,13 +26,13 @@ export function Home({ onSelect }: Props) {
             Only a handful of countries are available (United Kingdom, India, South Africa, United
             States, Canada and Kenya).
           </li>
-          <li>Country, subdivision and map data may be incomplete or inaccurate.</li>
+          <li>Country and map data may be incomplete or inaccurate.</li>
           <li>None of the copy, labels or help text has been reviewed and may change.</li>
         </ul>
       </Alert>
 
       <div className="variant-list">
-        {VARIANTS.map((v) => (
+        {visibleVariants.map((v) => (
           <div className="variant-card" key={v.id}>
             <div className="variant-card-text">
               <h2 className="title-sm">{v.title}</h2>
