@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ProgressBar } from '../components/ProgressBar'
 import { TextInput, TextArea, Checkbox } from '../components/Fields'
 import { Button } from '../components/Button'
 import { GoogleMap, type Coordinates } from '../components/GoogleMap'
 import { PlacesSearch, type PlaceSelection } from '../components/PlacesSearch'
 import { SubdivisionField } from '../components/SubdivisionField'
+import { AddressPinWarning } from '../components/AddressPinWarning'
+import { PinCountryWarning } from '../components/PinCountryWarning'
 import { ArrowBackIcon } from '../components/icons'
 import { countryCodeForCountry } from '../data/reference'
 import type { ApplicationData, VenueAddress } from '../types'
@@ -43,9 +45,43 @@ export function FindVenueMapFirst({
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [locationConfirmed, setLocationConfirmed] = useState(false)
   const [confirming, setConfirming] = useState(false)
+  const [addressMismatchBlocking, setAddressMismatchBlocking] = useState(false)
+  const [pinOutsideCountry, setPinOutsideCountry] = useState(false)
   // The live pin position. Starts at the flow's current coordinates and updates
   // as the user drags the map or picks a search result.
   const [coords, setCoords] = useState<Coordinates>(coordinates)
+
+  // Editable text for the lat/lng boxes. Kept separate from `coords` so the user
+  // can type freely; committed to `coords` (which drives the map) on blur/Enter.
+  const [latText, setLatText] = useState(coords.lat.toFixed(6))
+  const [lngText, setLngText] = useState(coords.lng.toFixed(6))
+  const [editingCoords, setEditingCoords] = useState(false)
+
+  // Reflect map-driven pin changes (drag or search) back into the boxes, unless
+  // the user is currently editing them.
+  useEffect(() => {
+    if (editingCoords) return
+    setLatText(coords.lat.toFixed(6))
+    setLngText(coords.lng.toFixed(6))
+  }, [coords, editingCoords])
+
+  // Move the pin to the typed coordinates. Invalid input is discarded — the
+  // effect then restores the boxes to the current pin position.
+  const applyTypedCoords = () => {
+    setEditingCoords(false)
+    const lat = parseFloat(latText)
+    const lng = parseFloat(lngText)
+    if (
+      !Number.isNaN(lat) &&
+      !Number.isNaN(lng) &&
+      lat >= -90 &&
+      lat <= 90 &&
+      lng >= -180 &&
+      lng <= 180
+    ) {
+      setCoords({ lat, lng })
+    }
+  }
 
   // A search result both fills the venue/address details and moves the pin.
   const handlePlace = (sel: PlaceSelection) => {
@@ -54,11 +90,6 @@ export function FindVenueMapFirst({
   }
 
   const handleConfirmLocation = async () => {
-    if (!data.venueName.trim()) {
-      setErrors({ venueName: 'This field is required.' })
-      return
-    }
-    setErrors({})
     setConfirming(true)
     await onConfirmLocation(coords)
     setConfirming(false)
@@ -73,7 +104,7 @@ export function FindVenueMapFirst({
     const e: Record<string, string> = {}
     if (!data.venueName.trim()) e.venueName = 'This field is required.'
     if (!data.address.addressLine1.trim()) e.addressLine1 = 'This field is required.'
-    if (!data.address.townCity.trim()) e.townCity = 'This field is required.'
+    if (!data.address.municipality.trim()) e.municipality = 'This field is required.'
     if (!data.address.postcode.trim()) e.postcode = 'This field is required.'
     if (!data.confirmedPermission) e.permission = 'You must confirm you have permission.'
     setErrors(e)
@@ -85,44 +116,24 @@ export function FindVenueMapFirst({
       <ProgressBar step={2} total={4} />
 
       <div className="intro">
-        <h1 className="title-md">Where is the club venue?</h1>
-        <p className="body">
-          Pick an appropriate{' '}
-          <a href="http://rpf.io/cc-venue" target="_blank" rel="noreferrer">
-            venue for your club
-          </a>
-          .
-        </p>
-        <p className="body">
-          Clubs need to run in public venues. You cannot run a club from a residential address, like
-          your home. Online clubs still need to provide a venue for safeguarding reasons.
-        </p>
+        <h1 className="title-md">
+          {locationConfirmed ? 'Confirm the venue’s address' : 'Where is the club venue?'}
+        </h1>
+        {!locationConfirmed && (
+          <>
+            <p className="body">
+              Pick an appropriate{' '}
+              <a href="http://rpf.io/cc-venue" target="_blank" rel="noreferrer">
+                venue for your club
+              </a>
+              .  Clubs need to run in public venues. You cannot run a club from a residential address,
+              like your home. Online clubs still need to provide a venue for safeguarding reasons.
+            </p>
+          </>
+        )}
       </div>
 
       <div className="section-gap">
-        <p className="chosen-country">
-          <span className="prefix">Chosen country: </span>
-          {data.country || 'Not set'}{' '}
-          <button type="button" className="link-button" onClick={onChangeCountry}>
-            (Go back to change country)
-          </button>
-        </p>
-
-        <TextInput
-          id="venueName"
-          label="What is the name of the venue?"
-          hint="e.g. Prince’s Library"
-          value={data.venueName}
-          onChange={(v) => update({ venueName: v })}
-          error={errors.venueName}
-        />
-
-        <hr className="divider" />
-
-        <h2 className="title-sm">Find your venue</h2>
-
-        {/* Once the location is confirmed the search is hidden — only the frozen
-            map (with its "Edit map location" button) remains. */}
         {!locationConfirmed && (
           <>
             <PlacesSearch
@@ -135,46 +146,97 @@ export function FindVenueMapFirst({
               <span>or</span>
               <span className="line" />
             </div>
+
+            <div className="field">
+              <div className="label-wrapper">
+                <label>Find the venue on the map</label>
+                <span className="hint">
+                  Drag the map to move the pin to your venue, then confirm the location.
+                </span>
+              </div>
+              <GoogleMap
+                key="edit"
+                variant="full"
+                coordinates={coords}
+                interactive
+                onCoordinatesChange={setCoords}
+              />
+            </div>
+
+            <div className="or-divider">
+              <span className="line" />
+              <span>or</span>
+              <span className="line" />
+            </div>
+
+            <div className="field">
+              <div className="label-wrapper">
+                <label htmlFor="lat">Enter coordinates directly</label>
+                <span className="hint">
+                  Type a latitude and longitude to move the pin, or drag the map above.
+                </span>
+              </div>
+              <div className="coord-row">
+                <div className="coord-field">
+                  <label htmlFor="lat">Latitude</label>
+                  <input
+                    id="lat"
+                    className="input-box"
+                    inputMode="decimal"
+                    value={latText}
+                    onChange={(e) => setLatText(e.target.value)}
+                    onFocus={() => setEditingCoords(true)}
+                    onBlur={applyTypedCoords}
+                    onKeyDown={(e) => e.key === 'Enter' && applyTypedCoords()}
+                  />
+                </div>
+                <div className="coord-field">
+                  <label htmlFor="lng">Longitude</label>
+                  <input
+                    id="lng"
+                    className="input-box"
+                    inputMode="decimal"
+                    value={lngText}
+                    onChange={(e) => setLngText(e.target.value)}
+                    onFocus={() => setEditingCoords(true)}
+                    onBlur={applyTypedCoords}
+                    onKeyDown={(e) => e.key === 'Enter' && applyTypedCoords()}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <PinCountryWarning
+              pin={coords}
+              country={data.country}
+              onChangeCountry={onChangeCountry}
+              onBlockingChange={setPinOutsideCountry}
+            />
           </>
         )}
 
-        <div className="field">
-          {locationConfirmed ? (
-            <span className="hint">
-              Location confirmed. Use “Edit map location” to move the pin again.
-            </span>
-          ) : (
-            <div className="label-wrapper">
-              <label>Find the venue on the map</label>
-              <span className="hint">
-                Drag the map to move the pin to your venue, then confirm the location.
-              </span>
-            </div>
-          )}
-          {locationConfirmed ? (
-            <GoogleMap
-              key="frozen"
-              variant="preview"
-              coordinates={coords}
-              onEdit={handleEditLocation}
-            />
-          ) : (
-            <GoogleMap
-              key="edit"
-              variant="full"
-              coordinates={coords}
-              interactive
-              onCoordinatesChange={setCoords}
-            />
-          )}
-        </div>
-
         {locationConfirmed && (
           <>
-            <hr className="divider" />
+            <div className="field">
+              <span className="hint">
+                Location confirmed. Use “Edit map location” to move the pin again.
+              </span>
+              <GoogleMap
+                key="frozen"
+                variant="preview"
+                coordinates={coords}
+                onEdit={handleEditLocation}
+              />
+            </div>
 
-            <h2 className="title-sm">Confirm the venue’s address</h2>
-
+            <TextInput
+              id="venueName"
+              label="What is the name of the venue?"
+              hint="e.g. Prince’s Library"
+              value={data.venueName}
+              onChange={(v) => update({ venueName: v })}
+              error={errors.venueName}
+            />
             <TextInput
               id="addressLine1"
               label="Address line 1"
@@ -193,16 +255,16 @@ export function FindVenueMapFirst({
               onChange={(v) => updateAddress({ addressLine2: v })}
             />
             <TextInput
-              id="townCity"
+              id="municipality"
               label="Village / Town / City"
-              value={data.address.townCity}
-              onChange={(v) => updateAddress({ townCity: v })}
-              error={errors.townCity}
+              value={data.address.municipality}
+              onChange={(v) => updateAddress({ municipality: v })}
+              error={errors.municipality}
             />
             <SubdivisionField
               country={data.country}
-              value={data.address.county}
-              onChange={(v) => updateAddress({ county: v })}
+              value={data.address.administrativeArea}
+              onChange={(v) => updateAddress({ administrativeArea: v })}
             />
             <TextInput
               id="postcode"
@@ -211,17 +273,12 @@ export function FindVenueMapFirst({
               onChange={(v) => updateAddress({ postcode: v })}
               error={errors.postcode}
             />
-            <TextInput
-              id="coordinates"
-              label="Coordinates (optional)"
-              hint={
-                <>
-                  Your venue coordinates are useful if you cannot provide other information to locate
-                  your venue. Find your coordinates using <strong>Google Maps</strong>.
-                </>
-              }
-              value={data.address.coordinates}
-              onChange={(v) => updateAddress({ coordinates: v })}
+
+            <AddressPinWarning
+              address={data.address}
+              country={data.country}
+              pin={coords}
+              onBlockingChange={setAddressMismatchBlocking}
             />
 
             <hr className="divider" />
@@ -251,15 +308,23 @@ export function FindVenueMapFirst({
       </div>
 
       <div className="button-wrapper">
-        <Button variant="secondary" icon={<ArrowBackIcon />} onClick={onBack}>
+        <Button
+          variant="secondary"
+          icon={<ArrowBackIcon />}
+          onClick={locationConfirmed ? handleEditLocation : onBack}
+        >
           Back
         </Button>
         {locationConfirmed ? (
-          <Button variant="primary" onClick={handleContinue}>
+          <Button variant="primary" onClick={handleContinue} disabled={addressMismatchBlocking}>
             Save and continue
           </Button>
         ) : (
-          <Button variant="primary" onClick={handleConfirmLocation} disabled={confirming}>
+          <Button
+            variant="primary"
+            onClick={handleConfirmLocation}
+            disabled={confirming || pinOutsideCountry}
+          >
             {confirming ? 'Confirming…' : 'Confirm venue location'}
           </Button>
         )}

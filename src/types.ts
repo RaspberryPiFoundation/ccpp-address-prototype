@@ -1,8 +1,10 @@
 export interface VenueAddress {
   addressLine1: string
   addressLine2: string
-  townCity: string
-  county: string
+  // Field names match the clubs API: `municipality` (town/village/city) and
+  // `administrativeArea` (county/state/province).
+  municipality: string
+  administrativeArea: string
   postcode: string
   coordinates: string
 }
@@ -25,8 +27,8 @@ export const emptyApplication: ApplicationData = {
   address: {
     addressLine1: '',
     addressLine2: '',
-    townCity: '',
-    county: '',
+    municipality: '',
+    administrativeArea: '',
     postcode: '',
     coordinates: '',
   },

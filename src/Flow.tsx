@@ -7,9 +7,9 @@ import { MapPicker } from './steps/MapPicker'
 import { Complete } from './steps/Complete'
 import type { Coordinates } from './components/GoogleMap'
 import type { PlaceSelection } from './components/PlacesSearch'
-import { loadGoogleMaps, parseAddressComponents, formatCoordinates } from './lib/googleMaps'
+import { loadGoogleMaps, adrAddressForPlaceId, formatCoordinates } from './lib/googleMaps'
 import { emptyApplication, type ApplicationData, type VenueAddress } from './types'
-import { capitalForCountry } from './data/reference'
+import { capitalForCountry, canonicalSubdivision } from './data/reference'
 import { VARIANTS, type Variant } from './variants'
 
 interface Props {
@@ -55,9 +55,9 @@ export function Flow({ variant, onExit }: Props) {
       venueName: d.venueName || sel.venueName,
       address: {
         addressLine1: sel.address.addressLine1,
-        addressLine2: '',
-        townCity: sel.address.townCity,
-        county: sel.address.county,
+        addressLine2: sel.address.addressLine2,
+        municipality: sel.address.municipality,
+        administrativeArea: canonicalSubdivision(d.country, sel.address.administrativeArea),
         postcode: sel.address.postcode,
         coordinates: formatCoordinates(sel.lat, sel.lng),
       },
@@ -75,16 +75,17 @@ export function Flow({ variant, onExit }: Props) {
       const google = await loadGoogleMaps()
       const geocoder = new google.maps.Geocoder()
       const { results } = await geocoder.geocode({ location: c })
-      if (results && results[0]) {
-        const parsed = parseAddressComponents(results[0].address_components)
+      const placeId = results?.[0]?.place_id
+      if (placeId) {
+        const adr = await adrAddressForPlaceId(placeId)
         setData((d) => ({
           ...d,
           address: {
-            addressLine1: parsed.addressLine1,
-            addressLine2: '',
-            townCity: parsed.townCity,
-            county: parsed.county,
-            postcode: parsed.postcode,
+            addressLine1: adr.addressLine1,
+            addressLine2: adr.addressLine2,
+            municipality: adr.municipality,
+            administrativeArea: canonicalSubdivision(d.country, adr.administrativeArea),
+            postcode: adr.postcode,
             coordinates: formatCoordinates(c.lat, c.lng),
           },
         }))

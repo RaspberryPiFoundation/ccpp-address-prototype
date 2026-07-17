@@ -1,11 +1,17 @@
 import { useState, useRef, useEffect } from 'react'
 import './PlacesSearch.css'
 import { SearchIcon, ErrorIcon, LocationIcon, SpinnerIcon } from './icons'
-import { loadGoogleMaps, parseAddressComponents, type ParsedAddress } from '../lib/googleMaps'
+import {
+  loadGoogleMaps,
+  parseAdrAddress,
+  adrAddressForPlaceId,
+  emptyAdrAddress,
+  type AdrAddress,
+} from '../lib/googleMaps'
 
 export interface PlaceSelection {
   venueName: string
-  address: ParsedAddress
+  address: AdrAddress
   lat: number
   lng: number
 }
@@ -16,14 +22,30 @@ interface PlacesSearchProps {
   countryCode?: string
 }
 
+// A menu row plus how to turn it into a full selection when chosen.
+interface Suggestion {
+  key: string
+  description: string
+  resolve: () => Promise<PlaceSelection | null>
+}
+
+// Plus Codes ("849VCWC8+R9", "CWC8+R9 Mountain View") use a 20-character base-20
+// alphabet and a '+'. Autocomplete doesn't return predictions for them, so we
+// route anything that looks like one through the geocoder instead.
+const PLUS_CODE_RE = /[23456789CFGHJMPQRVWX]{4,8}\+[23456789CFGHJMPQRVWX]{2,3}/i
+function looksLikePlusCode(value: string): boolean {
+  return PLUS_CODE_RE.test(value.trim())
+}
+
 /**
- * Google Places Autocomplete. Predictions come from AutocompleteService and
- * full details (address components + geometry) from PlacesService, so the
- * selection re-centres the map and autofills the address form.
+ * Google Places Autocomplete. Predictions come from the AutocompleteSuggestion
+ * API; the address is read from the place's adr microformat (adrFormatAddress).
+ * Plus Codes are resolved via the Geocoder. A selection re-centres the map and
+ * autofills the address form.
  */
 export function PlacesSearch({ onSelect, countryCode }: PlacesSearchProps) {
   const [query, setQuery] = useState('')
-  const [predictions, setPredictions] = useState<google.maps.places.AutocompletePrediction[]>([])
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [noResults, setNoResults] = useState(false)
@@ -31,8 +53,8 @@ export function PlacesSearch({ onSelect, countryCode }: PlacesSearchProps) {
   const [locating, setLocating] = useState(false)
   const [locateStatus, setLocateStatus] = useState<string | null>(null)
 
-  const autocompleteRef = useRef<google.maps.places.AutocompleteService | null>(null)
-  const placesRef = useRef<google.maps.places.PlacesService | null>(null)
+  const geocoderRef = useRef<google.maps.Geocoder | null>(null)
+  const readyRef = useRef(false)
   const sessionRef = useRef<google.maps.places.AutocompleteSessionToken | null>(null)
   const debounceRef = useRef<number | undefined>(undefined)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -40,9 +62,9 @@ export function PlacesSearch({ onSelect, countryCode }: PlacesSearchProps) {
   useEffect(() => {
     loadGoogleMaps()
       .then((google) => {
-        autocompleteRef.current = new google.maps.places.AutocompleteService()
-        placesRef.current = new google.maps.places.PlacesService(document.createElement('div'))
+        geocoderRef.current = new google.maps.Geocoder()
         sessionRef.current = new google.maps.places.AutocompleteSessionToken()
+        readyRef.current = true
       })
       .catch(() => setUnavailable(true))
   }, [])
@@ -55,68 +77,106 @@ export function PlacesSearch({ onSelect, countryCode }: PlacesSearchProps) {
     return () => document.removeEventListener('mousedown', onClick)
   }, [])
 
+  // Resolve a Place prediction to a full selection via the new Place API.
+  const resolvePlacePrediction = async (
+    prediction: google.maps.places.PlacePrediction,
+  ): Promise<PlaceSelection | null> => {
+    try {
+      const place = prediction.toPlace()
+      await place.fetchFields({ fields: ['displayName', 'location', 'adrFormatAddress'] })
+      // Start a fresh session token once a details request completes.
+      const g = await loadGoogleMaps()
+      sessionRef.current = new g.maps.places.AutocompleteSessionToken()
+      if (!place.location) return null
+      return {
+        venueName: place.displayName ?? '',
+        address: parseAdrAddress(place.adrFormatAddress),
+        lat: place.location.lat(),
+        lng: place.location.lng(),
+      }
+    } catch {
+      return null
+    }
+  }
+
   const runSearch = (value: string) => {
     setQuery(value)
     setNoResults(false)
     window.clearTimeout(debounceRef.current)
-    if (!autocompleteRef.current || value.trim().length < 3) {
-      setPredictions([])
+    if (value.trim().length < 3) {
+      setSuggestions([])
       setOpen(false)
       return
     }
     setLoading(true)
     setOpen(true)
-    debounceRef.current = window.setTimeout(() => {
-      autocompleteRef.current!.getPlacePredictions(
-        {
-          input: value,
-          sessionToken: sessionRef.current ?? undefined,
-          // Limit predictions to the chosen country, when one is selected.
-          componentRestrictions: countryCode ? { country: countryCode } : undefined,
-        },
-        (results, status) => {
-          setLoading(false)
-          const ok = status === google.maps.places.PlacesServiceStatus.OK && results
-          setPredictions(ok ? results! : [])
-          setNoResults(!ok)
-        },
-      )
+    debounceRef.current = window.setTimeout(async () => {
+      if (!readyRef.current) return
+      // Plus Codes aren't handled by autocomplete — geocode them directly.
+      if (looksLikePlusCode(value)) {
+        geocoderRef.current!.geocode(
+          {
+            address: value,
+            componentRestrictions: countryCode ? { country: countryCode } : undefined,
+          },
+          (results, status) => {
+            setLoading(false)
+            const ok = status === google.maps.GeocoderStatus.OK && results && results.length > 0
+            setSuggestions(
+              ok
+                ? results!.map((r, i) => ({
+                    key: r.place_id || `geo-${i}`,
+                    description: r.formatted_address,
+                    resolve: async () => ({
+                      venueName: '',
+                      address: r.place_id ? await adrAddressForPlaceId(r.place_id) : emptyAdrAddress(),
+                      lat: r.geometry.location.lat(),
+                      lng: r.geometry.location.lng(),
+                    }),
+                  }))
+                : [],
+            )
+            setNoResults(!ok)
+          },
+        )
+        return
+      }
+
+      try {
+        const { suggestions: results } =
+          await google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
+            input: value,
+            sessionToken: sessionRef.current ?? undefined,
+            // Limit predictions to the chosen country, when one is selected.
+            includedRegionCodes: countryCode ? [countryCode] : undefined,
+          })
+        setLoading(false)
+        const predictions = results
+          .map((s) => s.placePrediction)
+          .filter((p): p is google.maps.places.PlacePrediction => p != null)
+        setSuggestions(
+          predictions.map((p) => ({
+            key: p.placeId,
+            description: p.text.text,
+            resolve: () => resolvePlacePrediction(p),
+          })),
+        )
+        setNoResults(predictions.length === 0)
+      } catch {
+        setLoading(false)
+        setSuggestions([])
+        setNoResults(true)
+      }
     }, 300)
   }
 
-  const choose = (prediction: google.maps.places.AutocompletePrediction) => {
-    if (!placesRef.current) return
-    setQuery(prediction.description)
+  const choose = async (suggestion: Suggestion) => {
+    setQuery(suggestion.description)
     setOpen(false)
-    setPredictions([])
-    placesRef.current.getDetails(
-      {
-        placeId: prediction.place_id,
-        fields: ['name', 'address_components', 'geometry'],
-        sessionToken: sessionRef.current ?? undefined,
-      },
-      (place, status) => {
-        // Refresh the session token after a details request completes.
-        loadGoogleMaps().then((g) => {
-          sessionRef.current = new g.maps.places.AutocompleteSessionToken()
-        })
-        if (
-          status !== google.maps.places.PlacesServiceStatus.OK ||
-          !place ||
-          !place.geometry?.location
-        ) {
-          setNoResults(true)
-          return
-        }
-        const address = parseAddressComponents(place.address_components ?? [])
-        onSelect({
-          venueName: place.name ?? '',
-          address,
-          lat: place.geometry.location.lat(),
-          lng: place.geometry.location.lng(),
-        })
-      },
-    )
+    setSuggestions([])
+    const selection = await suggestion.resolve()
+    if (selection) onSelect(selection)
+    else setNoResults(true)
   }
 
   // Use the browser Geolocation API to get the user's position, then reverse
@@ -137,9 +197,8 @@ export function PlacesSearch({ onSelect, countryCode }: PlacesSearchProps) {
           const google = await loadGoogleMaps()
           const geocoder = new google.maps.Geocoder()
           const { results } = await geocoder.geocode({ location: { lat, lng } })
-          const address: ParsedAddress = results[0]
-            ? parseAddressComponents(results[0].address_components)
-            : { addressLine1: '', townCity: '', county: '', postcode: '', country: '' }
+          const placeId = results[0]?.place_id
+          const address = placeId ? await adrAddressForPlaceId(placeId) : emptyAdrAddress()
           if (results[0]) setQuery(results[0].formatted_address)
           onSelect({ venueName: '', address, lat, lng })
           setLocateStatus(
@@ -149,12 +208,7 @@ export function PlacesSearch({ onSelect, countryCode }: PlacesSearchProps) {
           )
         } catch {
           // Reverse geocoding needs Google; without it we still pass coordinates.
-          onSelect({
-            venueName: '',
-            address: { addressLine1: '', townCity: '', county: '', postcode: '', country: '' },
-            lat,
-            lng,
-          })
+          onSelect({ venueName: '', address: emptyAdrAddress(), lat, lng })
           setLocateStatus('We saved your coordinates but couldn’t look up the address. Enter it manually below.')
         } finally {
           setLocating(false)
@@ -190,7 +244,7 @@ export function PlacesSearch({ onSelect, countryCode }: PlacesSearchProps) {
             value={query}
             placeholder={unavailable ? 'Search unavailable — enter the address below' : 'Start typing an address…'}
             onChange={(e) => runSearch(e.target.value)}
-            onFocus={() => predictions.length && setOpen(true)}
+            onFocus={() => suggestions.length && setOpen(true)}
             autoComplete="off"
             disabled={unavailable}
           />
@@ -201,10 +255,10 @@ export function PlacesSearch({ onSelect, countryCode }: PlacesSearchProps) {
               <div className="places-spinner">Searching…</div>
             ) : (
               <ul role="listbox">
-                {predictions.map((p) => (
-                  <li key={p.place_id} role="option" onClick={() => choose(p)}>
+                {suggestions.map((s) => (
+                  <li key={s.key} role="option" onClick={() => choose(s)}>
                     <SearchIcon />
-                    {p.description}
+                    {s.description}
                   </li>
                 ))}
               </ul>

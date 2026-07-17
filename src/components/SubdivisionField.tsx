@@ -1,5 +1,9 @@
 import { SelectInput, TextInput } from './Fields'
-import { subdivisionsForCountry } from '../data/reference'
+import { subdivisionsForCountry, countryCodeForCountry } from '../data/reference'
+
+// Countries whose subdivision is entered as free text rather than picked from a
+// list — the UK's local authorities are too numerous/inconsistent to list well.
+const FREE_TEXT_COUNTRIES = new Set(['gb'])
 
 interface Props {
   /** The chosen country name; determines the list of subdivisions. */
@@ -10,14 +14,15 @@ interface Props {
 }
 
 /**
- * County / state / province field. When the chosen country has subdivisions in
- * the reference data it renders a dropdown of them; otherwise it falls back to a
- * free-text input so the flow still works for unlisted countries.
+ * County / state / province field. Renders a dropdown of the country's
+ * subdivisions when we have a good list, and a free-text input otherwise (for
+ * the UK, or countries with no subdivision data).
  */
 export function SubdivisionField({ country, value, onChange, error }: Props) {
+  const code = countryCodeForCountry(country)
   const options = subdivisionsForCountry(country)
 
-  if (options.length === 0) {
+  if (options.length === 0 || (code && FREE_TEXT_COUNTRIES.has(code))) {
     return (
       <TextInput
         id="county"

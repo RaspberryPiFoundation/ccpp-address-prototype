@@ -504,6 +504,23 @@ textarea.input-box {
   width: 100%;
 }
 
+/* Latitude / longitude entry row (variant 3 map page) */
+.coord-row {
+  display: flex;
+  gap: var(--space-2);
+}
+.coord-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.coord-field label {
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-1);
+  line-height: var(--lh-15);
+}
+
 .disclaimer-list {
   margin: 0;
   padding-left: var(--space-3);

@@ -5,6 +5,7 @@ import { Button } from '../components/Button'
 import { GoogleMap, type Coordinates } from '../components/GoogleMap'
 import { PlacesSearch, type PlaceSelection } from '../components/PlacesSearch'
 import { SubdivisionField } from '../components/SubdivisionField'
+import { AddressPinWarning } from '../components/AddressPinWarning'
 import { ArrowBackIcon } from '../components/icons'
 import { countryCodeForCountry } from '../data/reference'
 import type { ApplicationData, VenueAddress } from '../types'
@@ -33,12 +34,13 @@ export function FindVenue({
   onContinue,
 }: Props) {
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [addressMismatchBlocking, setAddressMismatchBlocking] = useState(false)
 
   const validate = () => {
     const e: Record<string, string> = {}
     if (!data.venueName.trim()) e.venueName = 'This field is required.'
     if (!data.address.addressLine1.trim()) e.addressLine1 = 'This field is required.'
-    if (!data.address.townCity.trim()) e.townCity = 'This field is required.'
+    if (!data.address.municipality.trim()) e.municipality = 'This field is required.'
     if (!data.address.postcode.trim()) e.postcode = 'This field is required.'
     if (!data.confirmedPermission) e.permission = 'You must confirm you have permission.'
     setErrors(e)
@@ -130,16 +132,16 @@ export function FindVenue({
           onChange={(v) => updateAddress({ addressLine2: v })}
         />
         <TextInput
-          id="townCity"
+          id="municipality"
           label="Village / Town / City"
-          value={data.address.townCity}
-          onChange={(v) => updateAddress({ townCity: v })}
-          error={errors.townCity}
+          value={data.address.municipality}
+          onChange={(v) => updateAddress({ municipality: v })}
+          error={errors.municipality}
         />
         <SubdivisionField
           country={data.country}
-          value={data.address.county}
-          onChange={(v) => updateAddress({ county: v })}
+          value={data.address.administrativeArea}
+          onChange={(v) => updateAddress({ administrativeArea: v })}
         />
         <TextInput
           id="postcode"
@@ -159,6 +161,13 @@ export function FindVenue({
           }
           value={data.address.coordinates}
           onChange={(v) => updateAddress({ coordinates: v })}
+        />
+
+        <AddressPinWarning
+          address={data.address}
+          country={data.country}
+          pin={coordinates}
+          onBlockingChange={setAddressMismatchBlocking}
         />
 
         <hr className="divider" />
@@ -189,7 +198,7 @@ export function FindVenue({
         <Button variant="secondary" icon={<ArrowBackIcon />} onClick={onBack}>
           Back
         </Button>
-        <Button variant="primary" onClick={handleContinue}>
+        <Button variant="primary" onClick={handleContinue} disabled={addressMismatchBlocking}>
           Save and continue
         </Button>
       </div>

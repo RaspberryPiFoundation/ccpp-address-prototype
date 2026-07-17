@@ -14,8 +14,8 @@ export function Complete({ data, onRestart }: Props) {
     data.venueName,
     address.addressLine1,
     address.addressLine2,
-    address.townCity,
-    address.county,
+    address.municipality,
+    address.administrativeArea,
     address.postcode,
     data.country,
   ].filter(Boolean)
