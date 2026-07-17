@@ -1,20 +1,17 @@
 import type { ReactNode } from 'react'
-import { InfoIcon, ErrorIcon } from './icons'
+import { Alert as DSAlert } from '@raspberrypifoundation/design-system-react'
 
 interface AlertProps {
   variant: 'info' | 'error'
-  title: ReactNode
+  title: string
   children?: ReactNode
 }
 
+/** Thin wrapper over the design system Alert, keeping this app's variant names. */
 export function Alert({ variant, title, children }: AlertProps) {
   return (
-    <div className={`alert alert-${variant}`} role={variant === 'error' ? 'alert' : undefined}>
-      <div className="alert-header">
-        <span className="icon">{variant === 'info' ? <InfoIcon /> : <ErrorIcon size={24} />}</span>
-        <span>{title}</span>
-      </div>
-      {children && <div className="alert-body">{children}</div>}
-    </div>
+    <DSAlert type={variant === 'error' ? 'error' : 'information'} title={title}>
+      {children}
+    </DSAlert>
   )
 }

@@ -9,6 +9,7 @@ import { PinCountryWarning } from '../components/PinCountryWarning'
 import { ArrowBackIcon } from '../components/icons'
 import { countryCodeForCountry, isPostcodeRequired } from '../data/reference'
 import { placeDetailsById } from '../lib/googleMaps'
+import { TextInput as DSTextInput } from '@raspberrypifoundation/design-system-react'
 import type { ApplicationData, VenueAddress } from '../types'
 
 interface Props {
@@ -178,40 +179,34 @@ export function FindVenueMapFirst({
               <span className="line" />
             </div>
 
-            <div className="field">
-              <div className="label-wrapper">
-                <label htmlFor="lat">Enter coordinates directly</label>
-                <span className="hint">
-                  Type a latitude and longitude to move the pin, or drag the map above.
-                </span>
+            <div className="coord-row">
+              <div className="coord-field">
+                <DSTextInput
+                  id="lat"
+                  name="lat"
+                  label="Latitude"
+                  inputMode="decimal"
+                  value={latText}
+                  fullWidth
+                  onChange={(e) => setLatText(e.target.value)}
+                  onFocus={() => setEditingCoords(true)}
+                  onBlur={applyTypedCoords}
+                  onKeyDown={(e) => e.key === 'Enter' && applyTypedCoords()}
+                />
               </div>
-              <div className="coord-row">
-                <div className="coord-field">
-                  <label htmlFor="lat">Latitude</label>
-                  <input
-                    id="lat"
-                    className="input-box"
-                    inputMode="decimal"
-                    value={latText}
-                    onChange={(e) => setLatText(e.target.value)}
-                    onFocus={() => setEditingCoords(true)}
-                    onBlur={applyTypedCoords}
-                    onKeyDown={(e) => e.key === 'Enter' && applyTypedCoords()}
-                  />
-                </div>
-                <div className="coord-field">
-                  <label htmlFor="lng">Longitude</label>
-                  <input
-                    id="lng"
-                    className="input-box"
-                    inputMode="decimal"
-                    value={lngText}
-                    onChange={(e) => setLngText(e.target.value)}
-                    onFocus={() => setEditingCoords(true)}
-                    onBlur={applyTypedCoords}
-                    onKeyDown={(e) => e.key === 'Enter' && applyTypedCoords()}
-                  />
-                </div>
+              <div className="coord-field">
+                <DSTextInput
+                  id="lng"
+                  name="lng"
+                  label="Longitude"
+                  inputMode="decimal"
+                  value={lngText}
+                  fullWidth
+                  onChange={(e) => setLngText(e.target.value)}
+                  onFocus={() => setEditingCoords(true)}
+                  onBlur={applyTypedCoords}
+                  onKeyDown={(e) => e.key === 'Enter' && applyTypedCoords()}
+                />
               </div>
             </div>
 
@@ -255,11 +250,7 @@ export function FindVenueMapFirst({
             />
             <TextInput
               id="addressLine2"
-              label={
-                <>
-                  Address line 2 <span style={{ fontWeight: 400 }}>(optional)</span>
-                </>
-              }
+              label="Address line 2 (optional)"
               value={data.address.addressLine2}
               onChange={(v) => updateAddress({ addressLine2: v })}
             />
@@ -272,25 +263,13 @@ export function FindVenueMapFirst({
             />
             <TextInput
               id="administrativeArea"
-              label={
-                <>
-                  County / state / province <span style={{ fontWeight: 400 }}>(optional)</span>
-                </>
-              }
+              label="County / state / province (optional)"
               value={data.address.administrativeArea}
               onChange={(v) => updateAddress({ administrativeArea: v })}
             />
             <TextInput
               id="postcode"
-              label={
-                isPostcodeRequired(data.country) ? (
-                  'Postcode'
-                ) : (
-                  <>
-                    Postcode <span style={{ fontWeight: 400 }}>(optional)</span>
-                  </>
-                )
-              }
+              label={isPostcodeRequired(data.country) ? 'Postcode' : 'Postcode (optional)'}
               value={data.address.postcode}
               onChange={(v) => updateAddress({ postcode: v })}
               error={errors.postcode}

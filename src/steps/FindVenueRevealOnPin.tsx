@@ -142,11 +142,7 @@ export function FindVenueRevealOnPin({
             />
             <TextInput
               id="addressLine2"
-              label={
-                <>
-                  Address line 2 <span style={{ fontWeight: 400 }}>(optional)</span>
-                </>
-              }
+              label="Address line 2 (optional)"
               value={data.address.addressLine2}
               onChange={(v) => updateAddress({ addressLine2: v })}
             />
@@ -159,25 +155,13 @@ export function FindVenueRevealOnPin({
             />
             <TextInput
               id="administrativeArea"
-              label={
-                <>
-                  County / state / province <span style={{ fontWeight: 400 }}>(optional)</span>
-                </>
-              }
+              label="County / state / province (optional)"
               value={data.address.administrativeArea}
               onChange={(v) => updateAddress({ administrativeArea: v })}
             />
             <TextInput
               id="postcode"
-              label={
-                isPostcodeRequired(data.country) ? (
-                  'Postcode'
-                ) : (
-                  <>
-                    Postcode <span style={{ fontWeight: 400 }}>(optional)</span>
-                  </>
-                )
-              }
+              label={isPostcodeRequired(data.country) ? 'Postcode' : 'Postcode (optional)'}
               value={data.address.postcode}
               onChange={(v) => updateAddress({ postcode: v })}
               error={errors.postcode}
@@ -185,12 +169,7 @@ export function FindVenueRevealOnPin({
             <TextInput
               id="coordinates"
               label="Coordinates (optional)"
-              hint={
-                <>
-                  Your venue coordinates are useful if you cannot provide other information to locate
-                  your venue. Find your coordinates using <strong>Google Maps</strong>.
-                </>
-              }
+              hint="Your venue coordinates are useful if you cannot provide other information to locate your venue. Find your coordinates using Google Maps."
               value={data.address.coordinates}
               onChange={(v) => updateAddress({ coordinates: v })}
             />

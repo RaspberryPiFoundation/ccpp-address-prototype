@@ -178,11 +178,7 @@ export function FindVenueSearchFirst({
             />
             <TextInput
               id="addressLine2"
-              label={
-                <>
-                  Address line 2 <span style={{ fontWeight: 400 }}>(optional)</span>
-                </>
-              }
+              label="Address line 2 (optional)"
               value={data.address.addressLine2}
               onChange={(v) => updateAddress({ addressLine2: v })}
             />
@@ -195,25 +191,13 @@ export function FindVenueSearchFirst({
             />
             <TextInput
               id="administrativeArea"
-              label={
-                <>
-                  County / state / province <span style={{ fontWeight: 400 }}>(optional)</span>
-                </>
-              }
+              label="County / state / province (optional)"
               value={data.address.administrativeArea}
               onChange={(v) => updateAddress({ administrativeArea: v })}
             />
             <TextInput
               id="postcode"
-              label={
-                isPostcodeRequired(data.country) ? (
-                  'Postcode'
-                ) : (
-                  <>
-                    Postcode <span style={{ fontWeight: 400 }}>(optional)</span>
-                  </>
-                )
-              }
+              label={isPostcodeRequired(data.country) ? 'Postcode' : 'Postcode (optional)'}
               value={data.address.postcode}
               onChange={(v) => updateAddress({ postcode: v })}
               error={errors.postcode}

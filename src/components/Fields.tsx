@@ -1,36 +1,19 @@
 import type { ReactNode } from 'react'
-import { ErrorIcon, CheckIcon } from './icons'
+import {
+  TextInput as DSTextInput,
+  SelectInput as DSSelectInput,
+  TextareaInput as DSTextareaInput,
+  CheckboxInput as DSCheckboxInput,
+} from '@raspberrypifoundation/design-system-react'
 
-function FieldError({ message }: { message?: string }) {
-  if (!message) return null
-  return (
-    <div className="error-message" role="alert">
-      <span className="icon">
-        <ErrorIcon />
-      </span>
-      <span>{message}</span>
-    </div>
-  )
-}
-
-interface LabelWrapperProps {
-  label: ReactNode
-  hint?: ReactNode
-  htmlFor?: string
-}
-function LabelWrapper({ label, hint, htmlFor }: LabelWrapperProps) {
-  return (
-    <div className="label-wrapper">
-      <label htmlFor={htmlFor}>{label}</label>
-      {hint && <span className="hint">{hint}</span>}
-    </div>
-  )
-}
+// Thin wrappers over the design system form components. They keep this app's
+// value-based onChange API and default `name` to `id`, so existing call sites
+// don't need to change.
 
 interface TextInputProps {
   id: string
-  label: ReactNode
-  hint?: ReactNode
+  label: string
+  hint?: string
   value: string
   onChange: (v: string) => void
   placeholder?: string
@@ -38,24 +21,23 @@ interface TextInputProps {
 }
 export function TextInput({ id, label, hint, value, onChange, placeholder, error }: TextInputProps) {
   return (
-    <div className="field">
-      <LabelWrapper label={label} hint={hint} htmlFor={id} />
-      <input
-        id={id}
-        className={`input-box${error ? ' error' : ''}`}
-        value={value}
-        placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value)}
-        aria-invalid={!!error}
-      />
-      <FieldError message={error} />
-    </div>
+    <DSTextInput
+      id={id}
+      name={id}
+      label={label}
+      hint={hint}
+      value={value}
+      placeholder={placeholder}
+      error={error}
+      fullWidth
+      onChange={(e) => onChange(e.target.value)}
+    />
   )
 }
 
 interface SelectInputProps {
   id: string
-  label: ReactNode
+  label: string
   value: string
   onChange: (v: string) => void
   options: string[]
@@ -71,69 +53,43 @@ export function SelectInput({
   placeholder = 'Please select',
   error,
 }: SelectInputProps) {
-  // Include an externally-supplied value (e.g. from Google) even if it's not
-  // one of the preset options, so the select still shows it.
-  const allOptions = value && !options.includes(value) ? [value, ...options] : options
   return (
-    <div className="field">
-      <LabelWrapper label={label} htmlFor={id} />
-      <select
-        id={id}
-        className={`input-box${error ? ' error' : ''}`}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        aria-invalid={!!error}
-      >
-        <option value="" disabled>
-          {placeholder}
-        </option>
-        {allOptions.map((o) => (
-          <option key={o} value={o}>
-            {o}
-          </option>
-        ))}
-      </select>
-      <FieldError message={error} />
-    </div>
+    <DSSelectInput
+      id={id}
+      name={id}
+      label={label}
+      value={value}
+      placeholder={placeholder}
+      error={error}
+      fullWidth
+      options={options.map((o) => ({ key: o, value: o }))}
+      onChange={(e) => onChange(e.target.value)}
+    />
   )
 }
 
 interface TextAreaProps {
   id: string
-  label: ReactNode
-  hint?: ReactNode
+  label: string
+  hint?: string
   value: string
   onChange: (v: string) => void
+  /** Accepted for call-site compatibility; the design system textarea ignores it. */
   placeholder?: string
-  maxLength?: number
   error?: string
 }
-export function TextArea({
-  id,
-  label,
-  hint,
-  value,
-  onChange,
-  placeholder,
-  maxLength = 250,
-  error,
-}: TextAreaProps) {
+export function TextArea({ id, label, hint, value, onChange, error }: TextAreaProps) {
   return (
-    <div className="field">
-      <LabelWrapper label={label} hint={hint} htmlFor={id} />
-      <textarea
-        id={id}
-        className={`input-box${error ? ' error' : ''}`}
-        value={value}
-        placeholder={placeholder}
-        maxLength={maxLength}
-        onChange={(e) => onChange(e.target.value)}
-      />
-      <span className="char-count">
-        {value.length}/{maxLength} characters
-      </span>
-      <FieldError message={error} />
-    </div>
+    <DSTextareaInput
+      id={id}
+      name={id}
+      label={label}
+      hint={hint}
+      value={value}
+      error={error}
+      fullWidth
+      onChange={(e) => onChange(e.target.value)}
+    />
   )
 }
 
@@ -146,20 +102,13 @@ interface CheckboxProps {
 }
 export function Checkbox({ id, label, checked, onChange, error }: CheckboxProps) {
   return (
-    <div className="field">
-      <label className="checkbox" htmlFor={id}>
-        <input
-          id={id}
-          type="checkbox"
-          checked={checked}
-          onChange={(e) => onChange(e.target.checked)}
-        />
-        <span className="box">
-          <CheckIcon />
-        </span>
-        <span className="cb-label">{label}</span>
-      </label>
-      <FieldError message={error} />
-    </div>
+    <DSCheckboxInput
+      id={id}
+      name={id}
+      label={label}
+      error={error}
+      isChecked={checked}
+      onChange={(e) => onChange(e.currentTarget.checked)}
+    />
   )
 }
