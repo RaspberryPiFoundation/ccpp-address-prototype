@@ -3,7 +3,6 @@ import { ProgressBar } from '../components/ProgressBar'
 import { SelectInput, Checkbox } from '../components/Fields'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
-import { ArrowBackIcon } from '../components/icons'
 import { COUNTRIES, VENUE_TYPES } from '../data/reference'
 import type { ApplicationData } from '../types'
 
@@ -81,9 +80,6 @@ export function StartApplication({ data, update, onContinue }: Props) {
       </div>
 
       <div className="button-wrapper">
-        <Button variant="secondary" icon={<ArrowBackIcon />} disabled>
-          Back
-        </Button>
         <Button variant="primary" onClick={handleContinue}>
           Save and continue
         </Button>

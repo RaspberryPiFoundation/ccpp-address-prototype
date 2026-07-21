@@ -128,8 +128,8 @@ export function FindVenueSearchFirst({
                   <div className="label-wrapper">
                     <label>Fine-tune the location on the map</label>
                     <span className="hint">
-                      Drag the map to move the pin, or tap a place on the map to select it, then
-                      confirm the location.
+                      Tap anywhere on the map to place the pin, or drag the map, then confirm the
+                      location.
                     </span>
                   </div>
                   <GoogleMap
@@ -138,6 +138,7 @@ export function FindVenueSearchFirst({
                     coordinates={coords}
                     interactive
                     onCoordinatesChange={setCoords}
+                    onMapClick={(c) => setCoords(c)}
                     onPoiSelect={handlePoiSelect}
                   />
                 </div>

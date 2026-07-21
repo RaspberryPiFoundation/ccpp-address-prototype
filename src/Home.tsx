@@ -1,23 +1,38 @@
+import { Accordion } from '@raspberrypifoundation/design-system-react'
 import { Alert } from './components/Alert'
 import { Button } from './components/Button'
-import { VARIANTS, type Variant } from './variants'
+import { VARIANTS, type Variant, type VariantInfo } from './variants'
 
 interface Props {
   onSelect: (variant: Variant) => void
 }
 
+// The lead prototype shown on its own; every other variant sits in the accordion.
+const PRIMARY: Variant = 'confirm-button'
+
 export function Home({ onSelect }: Props) {
-  // Only the map-based options (C, D, E) are shown for now; the others are hidden.
-  const visibleVariants = VARIANTS.filter(
-    (v) => v.id === 'confirm-button' || v.id === 'search-first' || v.id === 'guided',
+  const primary = VARIANTS.find((v) => v.id === PRIMARY)!
+  const others = VARIANTS.filter((v) => v.id !== PRIMARY)
+
+  const card = (v: VariantInfo) => (
+    <div className="variant-card" key={v.id}>
+      <div className="variant-card-text">
+        <h2 className="title-sm">{v.title}</h2>
+        <p className="body muted">{v.summary}</p>
+      </div>
+      <Button variant="primary" onClick={() => onSelect(v.id)}>
+        Try this
+      </Button>
+    </div>
   )
 
   return (
     <div className="card">
       <div className="intro">
-        <h1 className="title-lg">Venue address — prototypes</h1>
+        <h1 className="title-lg">Venue address — prototype</h1>
         <p className="body">
-          Prototypes of the “Where is the club venue?” step. Pick one below to try it.
+          A prototype of the “Where is the club venue?” step. Try the main approach below, or open
+          the list for other approaches.
         </p>
       </div>
 
@@ -33,19 +48,16 @@ export function Home({ onSelect }: Props) {
         </ul>
       </Alert>
 
-      <div className="variant-list">
-        {visibleVariants.map((v) => (
-          <div className="variant-card" key={v.id}>
-            <div className="variant-card-text">
-              <h2 className="title-sm">{v.title}</h2>
-              <p className="body muted">{v.summary}</p>
-            </div>
-            <Button variant="primary" onClick={() => onSelect(v.id)}>
-              Try this
-            </Button>
-          </div>
-        ))}
-      </div>
+      <div className="variant-list">{card(primary)}</div>
+
+      {others.length > 0 && (
+        <Accordion
+          id="other-approaches"
+          className=""
+          title="Other approaches to try"
+          content={<div className="variant-list">{others.map(card)}</div>}
+        />
+      )}
     </div>
   )
 }

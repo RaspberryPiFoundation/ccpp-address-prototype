@@ -25,7 +25,7 @@ export function MapPicker({ initialCoordinates, onSave, onCancel }: Props) {
         <p className="body">
           {failed
             ? 'Go back to enter the address manually or describe where your venue is.'
-            : 'Drag the map to move the pin to your venue, then save.'}
+            : 'Tap anywhere on the map to place the pin, or drag the map, then save.'}
         </p>
       </div>
 
@@ -34,6 +34,7 @@ export function MapPicker({ initialCoordinates, onSave, onCancel }: Props) {
         coordinates={initialCoordinates}
         interactive
         onCoordinatesChange={setCoords}
+        onMapClick={(c) => setCoords(c)}
         onLoadError={() => setFailed(true)}
       />
 
