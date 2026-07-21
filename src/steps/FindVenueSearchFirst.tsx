@@ -2,13 +2,13 @@ import { useEffect, useRef, useState, type ComponentType } from 'react'
 import { ProgressBar } from '../components/ProgressBar'
 import { TextInput, TextArea, Checkbox } from '../components/Fields'
 import { Button } from '../components/Button'
-import { GoogleMap, type Coordinates, type MapProps, type PoiSelection } from '../components/GoogleMap'
+import { GoogleMap, type Coordinates, type MapProps } from '../components/GoogleMap'
 import { PlacesSearch, type PlaceSelection } from '../components/PlacesSearch'
 import { AddressPinWarning } from '../components/AddressPinWarning'
 import { PinCountryWarning } from '../components/PinCountryWarning'
 import { ArrowBackIcon } from '../components/icons'
 import { countryCodeForCountry, isPostcodeRequired } from '../data/reference'
-import { placeDetailsById, emptyAdrAddress } from '../lib/googleMaps'
+import { placeDetailsById } from '../lib/googleMaps'
 import type { ApplicationData, VenueAddress } from '../types'
 
 interface Props {
@@ -69,19 +69,9 @@ export function FindVenueSearchFirst({
   }
 
   // Clicking a point of interest on the map fills its details and moves the pin.
-  const handlePoiSelect = async (poi: PoiSelection) => {
-    if (poi.placeId) {
-      const details = await placeDetailsById(poi.placeId)
-      if (details) handlePlace(details)
-    } else {
-      // OpenStreetMap POI: use its name + location; the address fills on confirm.
-      handlePlace({
-        venueName: poi.name ?? '',
-        address: emptyAdrAddress(),
-        lat: poi.lat,
-        lng: poi.lng,
-      })
-    }
+  const handlePoiSelect = async (placeId: string) => {
+    const details = await placeDetailsById(placeId)
+    if (details) handlePlace(details)
   }
 
   const handleConfirmLocation = async () => {
