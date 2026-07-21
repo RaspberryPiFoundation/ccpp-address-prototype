@@ -85,8 +85,9 @@ export function FindVenueGuided({
     skipNextGeocode.current = true
   }
 
-  const handlePoiSelect = async (placeId: string) => {
-    const details = await placeDetailsById(placeId)
+  const handlePoiSelect = async (poi: PoiSelection) => {
+    if (!poi.placeId) return
+    const details = await placeDetailsById(poi.placeId)
     if (details) handlePlace(details)
   }
 

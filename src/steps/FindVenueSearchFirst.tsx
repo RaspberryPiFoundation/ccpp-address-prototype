@@ -1,14 +1,14 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ComponentType } from 'react'
 import { ProgressBar } from '../components/ProgressBar'
 import { TextInput, TextArea, Checkbox } from '../components/Fields'
 import { Button } from '../components/Button'
-import { GoogleMap, type Coordinates } from '../components/GoogleMap'
+import { GoogleMap, type Coordinates, type MapProps, type PoiSelection } from '../components/GoogleMap'
 import { PlacesSearch, type PlaceSelection } from '../components/PlacesSearch'
 import { AddressPinWarning } from '../components/AddressPinWarning'
 import { PinCountryWarning } from '../components/PinCountryWarning'
 import { ArrowBackIcon } from '../components/icons'
 import { countryCodeForCountry, isPostcodeRequired } from '../data/reference'
-import { placeDetailsById } from '../lib/googleMaps'
+import { placeDetailsById, emptyAdrAddress } from '../lib/googleMaps'
 import type { ApplicationData, VenueAddress } from '../types'
 
 interface Props {
@@ -22,6 +22,8 @@ interface Props {
   onContinue: () => void
   /** Reverse-geocodes the given pin location and fills the address fields. */
   onConfirmLocation: (c: Coordinates) => Promise<void>
+  /** Map component to render — GoogleMap by default, or LeafletMap for OSM. */
+  MapComponent?: ComponentType<MapProps>
 }
 
 /**
@@ -40,6 +42,7 @@ export function FindVenueSearchFirst({
   onBack,
   onContinue,
   onConfirmLocation,
+  MapComponent = GoogleMap,
 }: Props) {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [locationConfirmed, setLocationConfirmed] = useState(false)
@@ -66,9 +69,19 @@ export function FindVenueSearchFirst({
   }
 
   // Clicking a point of interest on the map fills its details and moves the pin.
-  const handlePoiSelect = async (placeId: string) => {
-    const details = await placeDetailsById(placeId)
-    if (details) handlePlace(details)
+  const handlePoiSelect = async (poi: PoiSelection) => {
+    if (poi.placeId) {
+      const details = await placeDetailsById(poi.placeId)
+      if (details) handlePlace(details)
+    } else {
+      // OpenStreetMap POI: use its name + location; the address fills on confirm.
+      handlePlace({
+        venueName: poi.name ?? '',
+        address: emptyAdrAddress(),
+        lat: poi.lat,
+        lng: poi.lng,
+      })
+    }
   }
 
   const handleConfirmLocation = async () => {
@@ -132,7 +145,7 @@ export function FindVenueSearchFirst({
                       location.
                     </span>
                   </div>
-                  <GoogleMap
+                  <MapComponent
                     key="edit"
                     variant="full"
                     coordinates={coords}
@@ -160,7 +173,7 @@ export function FindVenueSearchFirst({
               <span className="hint">
                 Location confirmed. Use “Edit map location” to move the pin again.
               </span>
-              <GoogleMap
+              <MapComponent
                 key="frozen"
                 variant="preview"
                 coordinates={coords}

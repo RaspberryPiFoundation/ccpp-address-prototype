@@ -27,7 +27,8 @@ const POI_MAP_STYLES: google.maps.MapTypeStyle[] = [
   { featureType: 'poi.sports_complex', stylers: [{ visibility: 'simplified' }] },
 ]
 
-interface GoogleMapProps {
+/** Shared props for the map components (GoogleMap and LeafletMap). */
+export interface MapProps {
   variant: 'preview' | 'full'
   coordinates: Coordinates
   interactive?: boolean
@@ -58,7 +59,7 @@ export function GoogleMap({
   onLoadError,
   onPoiSelect,
   onMapClick,
-}: GoogleMapProps) {
+}: MapProps) {
   const canvasRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<google.maps.Map | null>(null)
   const [status, setStatus] = useState<Status>('loading')

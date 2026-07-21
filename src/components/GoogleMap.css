@@ -22,6 +22,9 @@
 .gmap-canvas {
   position: absolute;
   inset: 0;
+  /* Contain the map library's internal z-indexes so the centre pin (and edit
+     button) reliably stack above the tiles — Leaflet's panes go up to ~700. */
+  z-index: 0;
 }
 
 /* Fixed centre pin overlaid on the map (the map pans beneath it) */
