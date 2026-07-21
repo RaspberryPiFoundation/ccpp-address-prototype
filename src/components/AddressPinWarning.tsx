@@ -90,7 +90,7 @@ export function AddressPinWarning({ address, country, pin, onBlockingChange }: P
   if (!isMismatch) return null
 
   return (
-    <Alert variant="error" title="The address and map pin don’t match">
+    <Alert variant="error" title="The address and map pin don’t match" announce>
       The address you entered is about {Math.round(distanceKm!)} km from the map pin. Check the
       address details or move the pin to the correct location.
       <Checkbox

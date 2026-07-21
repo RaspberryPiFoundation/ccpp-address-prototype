@@ -25,12 +25,13 @@ interface Props {
 }
 
 /**
- * Search-first variant. Only the address search shows to begin with; once a
- * search returns a result the map appears so the user can fine-tune the pin.
- * There's no coordinate entry. Clicking "Confirm venue location" reverse-geocodes
- * the pin, reveals the address for confirmation, and freezes the map.
+ * Guided variant, designed for people who struggle with maps. Search (or "use my
+ * location") is the main path and fills the address straight away, shown as plain
+ * editable fields to confirm by reading — no map manipulation required. The map
+ * is optional; when shown you can simply tap where your venue is (tap-to-place)
+ * rather than drag a pin, and the address updates to match.
  */
-export function FindVenueSearchFirst({
+export function FindVenueGuided({
   data,
   coordinates,
   update,
@@ -42,44 +43,70 @@ export function FindVenueSearchFirst({
   onConfirmLocation,
 }: Props) {
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [locationConfirmed, setLocationConfirmed] = useState(false)
-  const [confirming, setConfirming] = useState(false)
+  const [coords, setCoords] = useState<Coordinates>(coordinates)
+  const [hasLocation, setHasLocation] = useState(false)
+  const [showMap, setShowMap] = useState(false)
   const [addressMismatchBlocking, setAddressMismatchBlocking] = useState(false)
   const [pinOutsideCountry, setPinOutsideCountry] = useState(false)
-  // Whether a search has returned a result — the map only appears after this.
-  const [searchDone, setSearchDone] = useState(false)
-  // The live pin position, updated by search results and map drags.
-  const [coords, setCoords] = useState<Coordinates>(coordinates)
+  // Announced to screen readers when the address is filled from a choice.
+  const [statusMessage, setStatusMessage] = useState('')
 
-  // Move focus to the heading when the address section is revealed on confirm.
-  const headingRef = useRef<HTMLHeadingElement>(null)
+  // Refs so the map's once-bound listeners read current values, not stale ones.
+  const hasLocationRef = useRef(false)
+  hasLocationRef.current = hasLocation
+  const skipNextGeocode = useRef(false)
+  const geocodeTimer = useRef<number | undefined>(undefined)
+  // Heading of the revealed address section, focused when it appears.
+  const addressHeadingRef = useRef<HTMLHeadingElement>(null)
+
+  // Move focus to the address section once a location is set, so keyboard and
+  // screen reader users are taken to the fields they need to check.
   useEffect(() => {
-    if (locationConfirmed) headingRef.current?.focus()
-  }, [locationConfirmed])
+    if (hasLocation) addressHeadingRef.current?.focus()
+  }, [hasLocation])
 
-  // A search result fills the venue/address details, moves the pin, and reveals
-  // the map.
+  // Reverse-geocode a pin (debounced) to keep the address fields in step with it.
+  const refreshAddressFromPin = (c: Coordinates) => {
+    window.clearTimeout(geocodeTimer.current)
+    geocodeTimer.current = window.setTimeout(() => {
+      void onConfirmLocation(c)
+    }, 500)
+  }
+  useEffect(() => () => window.clearTimeout(geocodeTimer.current), [])
+
+  // Search / "use my location": fills the address (with a name) and moves the pin.
   const handlePlace = (sel: PlaceSelection) => {
     applyPlace(sel)
     setCoords({ lat: sel.lat, lng: sel.lng })
-    setSearchDone(true)
+    setHasLocation(true)
+    setShowMap(true)
+    setStatusMessage('We filled in the address below from your choice. Please check it.')
+    // applyPlace already filled the address, so ignore the recentre that follows.
+    skipNextGeocode.current = true
   }
 
-  // Clicking a point of interest on the map fills its details and moves the pin.
   const handlePoiSelect = async (placeId: string) => {
     const details = await placeDetailsById(placeId)
     if (details) handlePlace(details)
   }
 
-  const handleConfirmLocation = async () => {
-    setConfirming(true)
-    await onConfirmLocation(coords)
-    setConfirming(false)
-    setLocationConfirmed(true)
+  // Tapping the map (or using the map centre) places the pin and refreshes the
+  // address to match.
+  const handleMapClick = (c: Coordinates) => {
+    setCoords(c)
+    setHasLocation(true)
+    setStatusMessage('Location set. Updating the address below to match the map.')
+    refreshAddressFromPin(c)
   }
 
-  const handleEditLocation = () => {
-    setLocationConfirmed(false)
+  // Dragging the map: update the pin and, once a location exists, the address.
+  const handleCoordsChange = (c: Coordinates) => {
+    setCoords(c)
+    if (skipNextGeocode.current) {
+      skipNextGeocode.current = false
+      return
+    }
+    if (hasLocationRef.current) refreshAddressFromPin(c)
   }
 
   const handleContinue = () => {
@@ -99,73 +126,71 @@ export function FindVenueSearchFirst({
       <ProgressBar step={2} total={4} />
 
       <div className="intro">
-        <h1 className="title-md" tabIndex={-1} ref={headingRef}>
-          {locationConfirmed ? 'Confirm the venue’s address' : 'Where is the club venue?'}
-        </h1>
-        {!locationConfirmed && (
-          <p className="body">
-            Pick an appropriate{' '}
-            <a href="http://rpf.io/cc-venue" target="_blank" rel="noreferrer">
-              venue for your club
-            </a>
-            .  Clubs need to run in public venues. You cannot run a club from a residential address,
-            like your home. Online clubs still need to provide a venue for safeguarding reasons.
-          </p>
-        )}
+        <h1 className="title-md">Where is the club venue?</h1>
+        <p className="body">
+          Search for your venue below, or use your current location. We’ll fill in the address for
+          you to check — you don’t have to use the map unless you want to.
+        </p>
       </div>
 
       <div className="section-gap">
-        {!locationConfirmed && (
+        <PlacesSearch onSelect={handlePlace} countryCode={countryCodeForCountry(data.country)} />
+
+        {/* Screen-reader announcement when the address is filled from a choice. */}
+        <p className="visually-hidden" role="status" aria-live="polite">
+          {statusMessage}
+        </p>
+
+        {!showMap && (
+          <button type="button" className="link-button" onClick={() => setShowMap(true)}>
+            Can’t find it? Point to it on a map instead
+          </button>
+        )}
+
+        {showMap && (
           <>
-            <PlacesSearch
-              onSelect={handlePlace}
-              countryCode={countryCodeForCountry(data.country)}
+            <div className="field">
+              <div className="label-wrapper">
+                <label>Point to your venue on the map</label>
+                <span className="hint">
+                  Tap the spot where your venue is, or drag the map. Using a keyboard: focus the map,
+                  move it with the arrow keys, zoom with + and −, then use the button below. The
+                  address updates to match.
+                </span>
+              </div>
+              <GoogleMap
+                key="guided"
+                variant="full"
+                coordinates={coords}
+                interactive
+                onCoordinatesChange={handleCoordsChange}
+                onMapClick={handleMapClick}
+                onPoiSelect={handlePoiSelect}
+              />
+              <Button variant="secondary" onClick={() => handleMapClick(coords)}>
+                Use the map centre as the venue location
+              </Button>
+            </div>
+
+            <PinCountryWarning
+              pin={coords}
+              country={data.country}
+              onChangeCountry={onChangeCountry}
+              onBlockingChange={setPinOutsideCountry}
             />
-
-            {searchDone && (
-              <>
-                <div className="field">
-                  <div className="label-wrapper">
-                    <label>Fine-tune the location on the map</label>
-                    <span className="hint">
-                      Drag the map to move the pin, or tap a place on the map to select it, then
-                      confirm the location.
-                    </span>
-                  </div>
-                  <GoogleMap
-                    key="edit"
-                    variant="full"
-                    coordinates={coords}
-                    interactive
-                    onCoordinatesChange={setCoords}
-                    onPoiSelect={handlePoiSelect}
-                  />
-                </div>
-
-                <PinCountryWarning
-                  pin={coords}
-                  country={data.country}
-                  onChangeCountry={onChangeCountry}
-                  onBlockingChange={setPinOutsideCountry}
-                />
-              </>
-            )}
           </>
         )}
 
-        {locationConfirmed && (
+        {hasLocation && (
           <>
-            <div className="field">
-              <span className="hint">
-                Location confirmed. Use “Edit map location” to move the pin again.
-              </span>
-              <GoogleMap
-                key="frozen"
-                variant="preview"
-                coordinates={coords}
-                onEdit={handleEditLocation}
-              />
-            </div>
+            <hr className="divider" />
+
+            <h2 className="title-sm" tabIndex={-1} ref={addressHeadingRef}>
+              Check the venue’s address
+            </h2>
+            <p className="body muted">
+              We filled this in from your choice. Please read it and fix anything that isn’t right.
+            </p>
 
             <TextInput
               id="venueName"
@@ -226,10 +251,9 @@ export function FindVenueSearchFirst({
             <TextArea
               id="locationDescription"
               label="Describe the location (optional)"
-              hint="If you’re struggling to locate your venue using the map or address information, add an explanation of where your venue is. Include nearby landmarks, road names, or anything that helps someone find your venue."
+              hint="If the map or address don’t pinpoint your venue, describe where it is. Include nearby landmarks, road names, or anything that helps someone find it."
               value={data.locationDescription}
               onChange={(v) => update({ locationDescription: v })}
-              placeholder="e.g. Kibera Primary School, next to the water tower, off Ngong Road"
             />
 
             <Checkbox
@@ -248,26 +272,16 @@ export function FindVenueSearchFirst({
       </div>
 
       <div className="button-wrapper">
-        <Button
-          variant="secondary"
-          icon={<ArrowBackIcon />}
-          onClick={locationConfirmed ? handleEditLocation : onBack}
-        >
+        <Button variant="secondary" icon={<ArrowBackIcon />} onClick={onBack}>
           Back
         </Button>
-        {locationConfirmed ? (
-          <Button variant="primary" onClick={handleContinue} disabled={addressMismatchBlocking}>
-            Save and continue
-          </Button>
-        ) : (
-          <Button
-            variant="primary"
-            onClick={handleConfirmLocation}
-            disabled={!searchDone || confirming || pinOutsideCountry}
-          >
-            {confirming ? 'Confirming…' : 'Confirm venue location'}
-          </Button>
-        )}
+        <Button
+          variant="primary"
+          onClick={handleContinue}
+          disabled={!hasLocation || pinOutsideCountry || addressMismatchBlocking}
+        >
+          Save and continue
+        </Button>
       </div>
     </div>
   )

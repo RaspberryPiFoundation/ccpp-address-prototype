@@ -38,6 +38,8 @@ interface GoogleMapProps {
   onLoadError?: () => void
   /** When set, points of interest become clickable and report their place ID. */
   onPoiSelect?: (placeId: string) => void
+  /** Fires when the user taps anywhere on the map (not a POI), with the point. */
+  onMapClick?: (c: Coordinates) => void
 }
 
 type Status = 'loading' | 'ready' | 'no-key' | 'error'
@@ -55,15 +57,18 @@ export function GoogleMap({
   onEdit,
   onLoadError,
   onPoiSelect,
+  onMapClick,
 }: GoogleMapProps) {
   const canvasRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<google.maps.Map | null>(null)
   const [status, setStatus] = useState<Status>('loading')
 
-  // Keep the latest POI handler in a ref so the once-only map listener isn't
+  // Keep the latest click handlers in refs so the once-only map listener isn't
   // stuck with a stale closure.
   const onPoiSelectRef = useRef(onPoiSelect)
   onPoiSelectRef.current = onPoiSelect
+  const onMapClickRef = useRef(onMapClick)
+  onMapClickRef.current = onMapClick
 
   // Initialise the map once.
   useEffect(() => {
@@ -88,14 +93,24 @@ export function GoogleMap({
           if (interactive) onCoordinatesChange?.({ lat: c.lat(), lng: c.lng() })
         })
 
-        // Clicking a point of interest reports its place ID and recentres the
-        // map on it so the pin lands on the POI.
+        // Clicking a point of interest reports its place ID; tapping anywhere
+        // else reports the point. Either way the map recentres so the pin lands
+        // where the user tapped.
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        const recentre = (latLng: google.maps.LatLng) =>
+          reduceMotion ? map.setCenter(latLng) : map.panTo(latLng)
         map.addListener('click', (e: google.maps.MapMouseEvent | google.maps.IconMouseEvent) => {
           const placeId = (e as google.maps.IconMouseEvent).placeId
-          if (!placeId) return
-          e.stop() // suppress the default POI info window
-          if (e.latLng) map.panTo(e.latLng)
-          onPoiSelectRef.current?.(placeId)
+          if (placeId) {
+            e.stop() // suppress the default POI info window
+            if (e.latLng) recentre(e.latLng)
+            onPoiSelectRef.current?.(placeId)
+            return
+          }
+          if (e.latLng && onMapClickRef.current) {
+            recentre(e.latLng)
+            onMapClickRef.current({ lat: e.latLng.lat(), lng: e.latLng.lng() })
+          }
         })
 
         setStatus('ready')

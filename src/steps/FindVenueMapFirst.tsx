@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ProgressBar } from '../components/ProgressBar'
 import { TextInput, TextArea, Checkbox } from '../components/Fields'
 import { Button } from '../components/Button'
@@ -51,6 +51,12 @@ export function FindVenueMapFirst({
   // The live pin position. Starts at the flow's current coordinates and updates
   // as the user drags the map or picks a search result.
   const [coords, setCoords] = useState<Coordinates>(coordinates)
+
+  // Move focus to the heading when the address section is revealed on confirm.
+  const headingRef = useRef<HTMLHeadingElement>(null)
+  useEffect(() => {
+    if (locationConfirmed) headingRef.current?.focus()
+  }, [locationConfirmed])
 
   // Editable text for the lat/lng boxes. Kept separate from `coords` so the user
   // can type freely; committed to `coords` (which drives the map) on blur/Enter.
@@ -124,7 +130,7 @@ export function FindVenueMapFirst({
       <ProgressBar step={2} total={4} />
 
       <div className="intro">
-        <h1 className="title-md">
+        <h1 className="title-md" tabIndex={-1} ref={headingRef}>
           {locationConfirmed ? 'Confirm the venue’s address' : 'Where is the club venue?'}
         </h1>
         {!locationConfirmed && (
@@ -244,6 +250,7 @@ export function FindVenueMapFirst({
             <TextInput
               id="addressLine1"
               label="Address line 1"
+              autoComplete="address-line1"
               value={data.address.addressLine1}
               onChange={(v) => updateAddress({ addressLine1: v })}
               error={errors.addressLine1}
@@ -251,12 +258,14 @@ export function FindVenueMapFirst({
             <TextInput
               id="addressLine2"
               label="Address line 2 (optional)"
+              autoComplete="address-line2"
               value={data.address.addressLine2}
               onChange={(v) => updateAddress({ addressLine2: v })}
             />
             <TextInput
               id="municipality"
               label="Village / Town / City"
+              autoComplete="address-level2"
               value={data.address.municipality}
               onChange={(v) => updateAddress({ municipality: v })}
               error={errors.municipality}
@@ -264,12 +273,14 @@ export function FindVenueMapFirst({
             <TextInput
               id="administrativeArea"
               label="County / state / province (optional)"
+              autoComplete="address-level1"
               value={data.address.administrativeArea}
               onChange={(v) => updateAddress({ administrativeArea: v })}
             />
             <TextInput
               id="postcode"
               label={isPostcodeRequired(data.country) ? 'Postcode' : 'Postcode (optional)'}
+              autoComplete="postal-code"
               value={data.address.postcode}
               onChange={(v) => updateAddress({ postcode: v })}
               error={errors.postcode}

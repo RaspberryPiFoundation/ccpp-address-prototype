@@ -18,8 +18,19 @@ interface TextInputProps {
   onChange: (v: string) => void
   placeholder?: string
   error?: string
+  /** HTML autocomplete token — identifies the input's purpose (WCAG 1.3.5). */
+  autoComplete?: string
 }
-export function TextInput({ id, label, hint, value, onChange, placeholder, error }: TextInputProps) {
+export function TextInput({
+  id,
+  label,
+  hint,
+  value,
+  onChange,
+  placeholder,
+  error,
+  autoComplete,
+}: TextInputProps) {
   return (
     <DSTextInput
       id={id}
@@ -29,6 +40,7 @@ export function TextInput({ id, label, hint, value, onChange, placeholder, error
       value={value}
       placeholder={placeholder}
       error={error}
+      autoComplete={autoComplete}
       fullWidth
       onChange={(e) => onChange(e.target.value)}
     />

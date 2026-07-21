@@ -1,7 +1,7 @@
 // The form implementations this prototype compares. Each is a distinct build of
 // the "Where is the club venue?" step; everything else in the flow is shared.
 // See Home.tsx for the front page that launches them.
-export type Variant = 'as-is' | 'reveal-on-pin' | 'confirm-button' | 'search-first'
+export type Variant = 'as-is' | 'reveal-on-pin' | 'confirm-button' | 'search-first' | 'guided'
 
 export interface VariantInfo {
   id: Variant
@@ -33,5 +33,11 @@ export const VARIANTS: VariantInfo[] = [
     title: '4. Search-first, then map',
     summary:
       'Only the address search shows to start. Once a search returns a result the map appears to fine-tune the pin, then you confirm the address. No coordinate entry.',
+  },
+  {
+    id: 'guided',
+    title: '5. Guided (easier for maps)',
+    summary:
+      'Designed for people who struggle with maps. Search or use your location and the address fills in for you to check in plain text — no map needed. The optional map uses tap-to-place instead of dragging a pin.',
   },
 ]

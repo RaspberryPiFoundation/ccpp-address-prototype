@@ -52,6 +52,8 @@ export function PlacesSearch({ onSelect, countryCode }: PlacesSearchProps) {
   const [unavailable, setUnavailable] = useState(false)
   const [locating, setLocating] = useState(false)
   const [locateStatus, setLocateStatus] = useState<string | null>(null)
+  // Index of the keyboard-highlighted suggestion (-1 = none).
+  const [activeIndex, setActiveIndex] = useState(-1)
 
   const geocoderRef = useRef<google.maps.Geocoder | null>(null)
   const readyRef = useRef(false)
@@ -102,6 +104,7 @@ export function PlacesSearch({ onSelect, countryCode }: PlacesSearchProps) {
   const runSearch = (value: string) => {
     setQuery(value)
     setNoResults(false)
+    setActiveIndex(-1)
     window.clearTimeout(debounceRef.current)
     if (value.trim().length < 3) {
       setSuggestions([])
@@ -174,9 +177,31 @@ export function PlacesSearch({ onSelect, countryCode }: PlacesSearchProps) {
     setQuery(suggestion.description)
     setOpen(false)
     setSuggestions([])
+    setActiveIndex(-1)
     const selection = await suggestion.resolve()
     if (selection) onSelect(selection)
     else setNoResults(true)
+  }
+
+  // Keyboard support for the suggestions list (WCAG 2.1.1): arrow keys move the
+  // highlight, Enter selects, Escape closes.
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!open || suggestions.length === 0) return
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setActiveIndex((i) => (i + 1) % suggestions.length)
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setActiveIndex((i) => (i <= 0 ? suggestions.length - 1 : i - 1))
+    } else if (e.key === 'Enter') {
+      if (activeIndex >= 0) {
+        e.preventDefault()
+        void choose(suggestions[activeIndex])
+      }
+    } else if (e.key === 'Escape') {
+      setOpen(false)
+      setActiveIndex(-1)
+    }
   }
 
   // Use the browser Geolocation API to get the user's position, then reverse
@@ -245,8 +270,16 @@ export function PlacesSearch({ onSelect, countryCode }: PlacesSearchProps) {
             placeholder={unavailable ? 'Search unavailable — enter the address below' : 'Start typing an address…'}
             onChange={(e) => runSearch(e.target.value)}
             onFocus={() => suggestions.length && setOpen(true)}
+            onKeyDown={handleKeyDown}
             autoComplete="off"
             disabled={unavailable}
+            role="combobox"
+            aria-expanded={open && suggestions.length > 0}
+            aria-controls="places-listbox"
+            aria-autocomplete="list"
+            aria-activedescendant={
+              activeIndex >= 0 ? `places-option-${activeIndex}` : undefined
+            }
           />
         </div>
         {open && (
@@ -254,9 +287,16 @@ export function PlacesSearch({ onSelect, countryCode }: PlacesSearchProps) {
             {loading ? (
               <div className="places-spinner">Searching…</div>
             ) : (
-              <ul role="listbox">
-                {suggestions.map((s) => (
-                  <li key={s.key} role="option" onClick={() => choose(s)}>
+              <ul role="listbox" id="places-listbox">
+                {suggestions.map((s, i) => (
+                  <li
+                    key={s.key}
+                    id={`places-option-${i}`}
+                    role="option"
+                    aria-selected={i === activeIndex}
+                    onClick={() => choose(s)}
+                    onMouseEnter={() => setActiveIndex(i)}
+                  >
                     <SearchIcon />
                     {s.description}
                   </li>

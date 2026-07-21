@@ -6,10 +6,18 @@
   background: var(--rpf-off-white);
 }
 .gmap.preview {
-  height: 260px;
+  height: 220px;
 }
 .gmap.full {
-  height: 460px;
+  height: 320px;
+}
+@media (min-width: 640px) {
+  .gmap.preview {
+    height: 260px;
+  }
+  .gmap.full {
+    height: 460px;
+  }
 }
 .gmap-canvas {
   position: absolute;

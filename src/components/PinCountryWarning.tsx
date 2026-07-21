@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Alert } from './Alert'
-import { Button } from './Button'
-import { ArrowBackIcon } from './icons'
 import { loadGoogleMaps } from '../lib/googleMaps'
 import { countryCodeForCountry } from '../data/reference'
 import type { Coordinates } from './GoogleMap'
@@ -73,15 +71,15 @@ export function PinCountryWarning({ pin, country, onChangeCountry, onBlockingCha
   if (!blocking) return null
 
   return (
-    <Alert variant="error" title={`This location is outside ${country}`}>
+    <Alert
+      variant="error"
+      title={`This location is outside ${country}`}
+      actions={[{ label: 'Go back and change country', onClick: onChangeCountry }]}
+      announce
+    >
       The point you selected on the map is in <strong>{pinCountryName}</strong>, but you chose{' '}
       <strong>{country}</strong>. Move the pin back into {country}, or go back and change the country
       you’re searching in.
-      <div style={{ marginTop: 'var(--space-2)' }}>
-        <Button variant="secondary" icon={<ArrowBackIcon />} onClick={onChangeCountry}>
-          Go back and change country
-        </Button>
-      </div>
     </Alert>
   )
 }

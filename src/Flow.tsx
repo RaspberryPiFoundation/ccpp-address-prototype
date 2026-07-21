@@ -4,6 +4,7 @@ import { FindVenue } from './steps/FindVenue'
 import { FindVenueRevealOnPin } from './steps/FindVenueRevealOnPin'
 import { FindVenueMapFirst } from './steps/FindVenueMapFirst'
 import { FindVenueSearchFirst } from './steps/FindVenueSearchFirst'
+import { FindVenueGuided } from './steps/FindVenueGuided'
 import { MapPicker } from './steps/MapPicker'
 import { Complete } from './steps/Complete'
 import type { Coordinates } from './components/GoogleMap'
@@ -147,6 +148,9 @@ export function Flow({ variant, onExit }: Props) {
       )}
       {screen === 'venue' && variant === 'search-first' && (
         <FindVenueSearchFirst {...findVenueCommon} onConfirmLocation={populateFromCoords} />
+      )}
+      {screen === 'venue' && variant === 'guided' && (
+        <FindVenueGuided {...findVenueCommon} onConfirmLocation={populateFromCoords} />
       )}
       {screen === 'map' && (
         <MapPicker

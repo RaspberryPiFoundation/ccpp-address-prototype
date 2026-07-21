@@ -7,9 +7,9 @@ interface Props {
 }
 
 export function Home({ onSelect }: Props) {
-  // Only the map-based options (C and D) are shown for now; the others are hidden.
+  // Only the map-based options (C, D, E) are shown for now; the others are hidden.
   const visibleVariants = VARIANTS.filter(
-    (v) => v.id === 'confirm-button' || v.id === 'search-first',
+    (v) => v.id === 'confirm-button' || v.id === 'search-first' || v.id === 'guided',
   )
 
   return (

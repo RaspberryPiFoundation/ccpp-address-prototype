@@ -27,6 +27,18 @@ button {
   font-family: inherit;
 }
 
+/* Respect users who prefer reduced motion (WCAG 2.3.3). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* ---------------- App shell ---------------- */
 .app-shell {
   min-height: 100vh;
@@ -58,8 +70,14 @@ button {
   border-bottom: 1px solid var(--rpf-grey-150);
   display: flex;
   align-items: center;
-  padding: 0 var(--space-5);
-  gap: var(--space-5);
+  padding: 0 var(--space-2);
+  gap: var(--space-2);
+}
+@media (min-width: 640px) {
+  .portal-nav {
+    padding: 0 var(--space-5);
+    gap: var(--space-5);
+  }
 }
 .portal-nav .portal-logo {
   display: flex;
@@ -76,10 +94,16 @@ button {
   display: inline-block;
 }
 .portal-nav .nav-links {
-  display: flex;
+  /* Non-functional prototype chrome — hidden on mobile to save space. */
+  display: none;
   gap: var(--space-3);
   margin-left: auto;
   font-size: var(--fs-1);
+}
+@media (min-width: 640px) {
+  .portal-nav .nav-links {
+    display: flex;
+  }
 }
 .portal-nav .nav-links span {
   color: var(--rpf-text-secondary);
@@ -94,19 +118,30 @@ button {
   flex: 1 0 auto;
   display: flex;
   justify-content: center;
-  padding: var(--space-5) var(--space-2);
+  /* Mobile-first: tight padding on small screens, roomier from 640px up. */
+  padding: var(--space-2);
 }
 
 .card {
   background: var(--rpf-white);
   border-radius: var(--radius-card);
-  padding: var(--space-7);
+  padding: var(--space-3);
   width: 800px;
   max-width: 100%;
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-3);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+@media (min-width: 640px) {
+  .content {
+    padding: var(--space-5) var(--space-2);
+  }
+  .card {
+    padding: var(--space-7);
+    gap: var(--space-5);
+  }
 }
 
 /* Footer */
@@ -219,6 +254,7 @@ hr.divider {
   gap: var(--space-2);
   align-items: center;
   justify-content: flex-end;
+  flex-wrap: wrap;
   width: 100%;
 }
 
@@ -252,8 +288,10 @@ hr.divider {
 }
 .variant-card {
   display: flex;
-  align-items: center;
-  gap: var(--space-3);
+  /* Mobile-first: stack text over a full-width button; side-by-side from 640px. */
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
   border: 1px solid var(--rpf-grey-150);
   border-radius: var(--radius-sm);
   padding: var(--space-3);
@@ -266,6 +304,13 @@ hr.divider {
 }
 .variant-card button {
   flex-shrink: 0;
+}
+@media (min-width: 640px) {
+  .variant-card {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-3);
+  }
 }
 
 /* Wrapper for a running flow: stacks the banner above the card, centred. */
@@ -283,6 +328,19 @@ hr.divider {
 }
 .coord-field {
   flex: 1;
+}
+
+/* Visually hidden, still read by screen readers (for aria-live status text). */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .disclaimer-list {
