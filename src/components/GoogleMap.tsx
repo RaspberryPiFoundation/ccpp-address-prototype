@@ -81,7 +81,9 @@ export function GoogleMap({
           center: coordinates,
           zoom: 18,
           disableDefaultUI: !interactive,
-          gestureHandling: interactive ? 'greedy' : 'none',
+          // 'cooperative' so scrolling the page over the map scrolls the page
+          // (not pan/zoom the map). Zoom needs ctrl/cmd + scroll or two fingers.
+          gestureHandling: interactive ? 'cooperative' : 'none',
           keyboardShortcuts: interactive,
           clickableIcons: !!onPoiSelect,
           styles: POI_MAP_STYLES,

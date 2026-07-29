@@ -25,7 +25,7 @@ export function MapPicker({ initialCoordinates, onSave, onCancel }: Props) {
         <p className="body">
           {failed
             ? 'Go back to enter the address manually or describe where your venue is.'
-            : 'Tap anywhere on the map to place the pin, or drag the map, then save.'}
+            : 'Tap anywhere on the map to place the pin, or drag the map to move it. To zoom, pinch on a touchscreen or hold Ctrl (⌘ on Mac) and scroll. Then save.'}
         </p>
       </div>
 

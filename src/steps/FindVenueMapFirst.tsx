@@ -165,7 +165,8 @@ export function FindVenueMapFirst({
               <div className="label-wrapper">
                 <label>Find the venue on the map</label>
                 <span className="hint">
-                  Tap anywhere on the map to place the pin, or drag the map, then confirm the
+                  Tap anywhere on the map to place the pin, or drag the map to move it. To zoom,
+                  pinch on a touchscreen or hold Ctrl (⌘ on Mac) and scroll. Then confirm the
                   location.
                 </span>
               </div>

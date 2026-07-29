@@ -153,7 +153,8 @@ export function FindVenueGuided({
               <div className="label-wrapper">
                 <label>Point to your venue on the map</label>
                 <span className="hint">
-                  Tap the spot where your venue is, or drag the map. Using a keyboard: focus the map,
+                  Tap the spot where your venue is, or drag the map to move it. To zoom, pinch on a
+                  touchscreen or hold Ctrl (⌘ on Mac) and scroll. Using a keyboard: focus the map,
                   move it with the arrow keys, zoom with + and −, then use the button below. The
                   address updates to match.
                 </span>
