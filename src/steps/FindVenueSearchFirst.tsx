@@ -154,6 +154,15 @@ export function FindVenueSearchFirst({
                   onChangeCountry={onChangeCountry}
                   onBlockingChange={setPinOutsideCountry}
                 />
+
+                <TextArea
+                  id="locationDescription"
+                  label="Describe the location (optional)"
+                  hint="If you’re struggling to place the pin exactly, add an explanation of where your venue is. Include nearby landmarks, road names, or anything that helps someone find your venue."
+                  value={data.locationDescription}
+                  onChange={(v) => update({ locationDescription: v })}
+                  placeholder="e.g. Kibera Primary School, next to the water tower, off Ngong Road"
+                />
               </>
             )}
           </>
@@ -228,15 +237,6 @@ export function FindVenueSearchFirst({
             />
 
             <hr className="divider" />
-
-            <TextArea
-              id="locationDescription"
-              label="Describe the location (optional)"
-              hint="If you’re struggling to locate your venue using the map or address information, add an explanation of where your venue is. Include nearby landmarks, road names, or anything that helps someone find your venue."
-              value={data.locationDescription}
-              onChange={(v) => update({ locationDescription: v })}
-              placeholder="e.g. Kibera Primary School, next to the water tower, off Ngong Road"
-            />
 
             <Checkbox
               id="permission"
