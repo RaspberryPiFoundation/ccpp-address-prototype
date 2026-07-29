@@ -7,7 +7,7 @@ import { PlacesSearch, type PlaceSelection } from '../components/PlacesSearch'
 import { AddressPinWarning } from '../components/AddressPinWarning'
 import { PinCountryWarning } from '../components/PinCountryWarning'
 import { ArrowBackIcon } from '../components/icons'
-import { countryCodeForCountry, isPostcodeRequired } from '../data/reference'
+import { countryCodeForCountry, isPostcodeRequired, addressFormat } from '../data/reference'
 import { placeDetailsById } from '../lib/googleMaps'
 import type { ApplicationData, VenueAddress } from '../types'
 
@@ -53,6 +53,8 @@ export function FindVenueSearchFirst({
   const [searchDone, setSearchDone] = useState(false)
   // The live pin position, updated by search results and map drags.
   const [coords, setCoords] = useState<Coordinates>(coordinates)
+  // Address-field labels and hints tailored to the chosen country.
+  const fmt = addressFormat(data.country)
 
   // Move focus to the heading when the address section is revealed on confirm.
   const headingRef = useRef<HTMLHeadingElement>(null)
@@ -192,7 +194,8 @@ export function FindVenueSearchFirst({
             />
             <TextInput
               id="addressLine1"
-              label="Address line 1"
+              label={fmt.addressLine1.label}
+              hint={fmt.addressLine1.hint}
               autoComplete="address-line1"
               value={data.address.addressLine1}
               onChange={(v) => updateAddress({ addressLine1: v })}
@@ -200,14 +203,16 @@ export function FindVenueSearchFirst({
             />
             <TextInput
               id="addressLine2"
-              label="Address line 2 (optional)"
+              label={fmt.addressLine2.label}
+              hint={fmt.addressLine2.hint}
               autoComplete="address-line2"
               value={data.address.addressLine2}
               onChange={(v) => updateAddress({ addressLine2: v })}
             />
             <TextInput
               id="municipality"
-              label="Village / Town / City"
+              label={fmt.municipality.label}
+              hint={fmt.municipality.hint}
               autoComplete="address-level2"
               value={data.address.municipality}
               onChange={(v) => updateAddress({ municipality: v })}
@@ -215,14 +220,16 @@ export function FindVenueSearchFirst({
             />
             <TextInput
               id="administrativeArea"
-              label="County / state / province (optional)"
+              label={fmt.administrativeArea.label}
+              hint={fmt.administrativeArea.hint}
               autoComplete="address-level1"
               value={data.address.administrativeArea}
               onChange={(v) => updateAddress({ administrativeArea: v })}
             />
             <TextInput
               id="postcode"
-              label={isPostcodeRequired(data.country) ? 'Postcode' : 'Postcode (optional)'}
+              label={fmt.postcode.label}
+              hint={fmt.postcode.hint}
               autoComplete="postal-code"
               value={data.address.postcode}
               onChange={(v) => updateAddress({ postcode: v })}

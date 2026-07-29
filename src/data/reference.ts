@@ -49,6 +49,84 @@ export function capitalForCountry(countryName: string): { lat: number; lng: numb
   return code ? CAPITALS[code] : undefined
 }
 
+// Localised labels + example hints for the venue address fields.
+export interface AddressFieldText {
+  label: string
+  hint?: string
+}
+export interface AddressFormat {
+  addressLine1: AddressFieldText
+  addressLine2: AddressFieldText
+  municipality: AddressFieldText
+  administrativeArea: AddressFieldText
+  postcode: AddressFieldText
+}
+
+// Per-country address-field text for the core markets. Labels follow the
+// conventions in Google's address i18n dataset (libaddressinput), so they match
+// what people see elsewhere in their country. The "(optional)" suffixes mirror
+// the validation rules: the postcode is only required where isPostcodeRequired
+// is true (GB, US) — keep the two in sync if that set changes.
+const ADDRESS_FORMATS: Record<string, AddressFormat> = {
+  GB: {
+    addressLine1: { label: 'Address line 1', hint: 'Building number and street, e.g. 37 Hills Road' },
+    addressLine2: { label: 'Address line 2 (optional)', hint: 'Flat, unit, or building name' },
+    municipality: { label: 'Town or city', hint: 'e.g. Cambridge' },
+    administrativeArea: { label: 'County (optional)', hint: 'e.g. Cambridgeshire' },
+    postcode: { label: 'Postcode', hint: 'e.g. CB2 1NT' },
+  },
+  US: {
+    addressLine1: { label: 'Street address', hint: 'Number and street, e.g. 1600 Amphitheatre Pkwy' },
+    addressLine2: { label: 'Apt, suite, or unit (optional)' },
+    municipality: { label: 'City', hint: 'e.g. Mountain View' },
+    administrativeArea: { label: 'State (optional)', hint: 'e.g. California' },
+    postcode: { label: 'ZIP code', hint: 'e.g. 94043' },
+  },
+  IE: {
+    addressLine1: { label: 'Address line 1', hint: 'Building number and street' },
+    addressLine2: { label: 'Address line 2 (optional)', hint: 'Flat, unit, or building name' },
+    municipality: { label: 'Town or city', hint: 'e.g. Galway' },
+    administrativeArea: { label: 'County (optional)', hint: 'e.g. County Cork' },
+    postcode: { label: 'Eircode (optional)', hint: 'e.g. D02 AF30' },
+  },
+  IN: {
+    addressLine1: { label: 'Address', hint: 'Building number and street, e.g. 12 MG Road' },
+    addressLine2: { label: 'Area or locality (optional)', hint: 'Locality, area, or nearby landmark' },
+    municipality: { label: 'City, town, or village', hint: 'e.g. Bengaluru' },
+    administrativeArea: { label: 'State (optional)', hint: 'e.g. Karnataka' },
+    postcode: { label: 'PIN code (optional)', hint: '6 digits, e.g. 560001' },
+  },
+  KE: {
+    addressLine1: { label: 'Building, estate, or street', hint: 'Building name, road, or plot number' },
+    addressLine2: { label: 'Area or neighbourhood (optional)', hint: 'Estate, ward, or nearby landmark' },
+    municipality: { label: 'Town or city', hint: 'e.g. Nairobi' },
+    administrativeArea: { label: 'County (optional)', hint: 'e.g. Nairobi County' },
+    postcode: { label: 'Postal code (optional)', hint: '5 digits, e.g. 00100' },
+  },
+  ZA: {
+    addressLine1: { label: 'Street address', hint: 'Number and street, or building name' },
+    addressLine2: { label: 'Suburb (optional)', hint: 'Suburb or complex' },
+    municipality: { label: 'City or town', hint: 'e.g. Cape Town' },
+    administrativeArea: { label: 'Province (optional)', hint: 'e.g. Western Cape' },
+    postcode: { label: 'Postal code (optional)', hint: '4 digits, e.g. 8001' },
+  },
+}
+
+// Generic fallback for countries we haven't tailored.
+const DEFAULT_ADDRESS_FORMAT: AddressFormat = {
+  addressLine1: { label: 'Address line 1', hint: 'Building number and street' },
+  addressLine2: { label: 'Address line 2 (optional)' },
+  municipality: { label: 'Town or city' },
+  administrativeArea: { label: 'Region, state, or province (optional)' },
+  postcode: { label: 'Postal code (optional)' },
+}
+
+// Localised address-field labels and hints for a country display name.
+export function addressFormat(countryName: string): AddressFormat {
+  const code = countryCodeForCountry(countryName)?.toUpperCase()
+  return (code && ADDRESS_FORMATS[code]) || DEFAULT_ADDRESS_FORMAT
+}
+
 export const VENUE_TYPES = [
   'Library',
   'School',

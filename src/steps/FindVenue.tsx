@@ -6,7 +6,7 @@ import { GoogleMap, type Coordinates } from '../components/GoogleMap'
 import { PlacesSearch, type PlaceSelection } from '../components/PlacesSearch'
 import { AddressPinWarning } from '../components/AddressPinWarning'
 import { ArrowBackIcon } from '../components/icons'
-import { countryCodeForCountry, isPostcodeRequired } from '../data/reference'
+import { countryCodeForCountry, isPostcodeRequired, addressFormat } from '../data/reference'
 import type { ApplicationData, VenueAddress } from '../types'
 
 interface Props {
@@ -34,6 +34,8 @@ export function FindVenue({
 }: Props) {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [addressMismatchBlocking, setAddressMismatchBlocking] = useState(false)
+  // Address-field labels and hints tailored to the chosen country.
+  const fmt = addressFormat(data.country)
 
   const validate = () => {
     const e: Record<string, string> = {}
@@ -116,33 +118,38 @@ export function FindVenue({
 
         <TextInput
           id="addressLine1"
-          label="Address line 1"
+          label={fmt.addressLine1.label}
+          hint={fmt.addressLine1.hint}
           value={data.address.addressLine1}
           onChange={(v) => updateAddress({ addressLine1: v })}
           error={errors.addressLine1}
         />
         <TextInput
           id="addressLine2"
-          label="Address line 2 (optional)"
+          label={fmt.addressLine2.label}
+          hint={fmt.addressLine2.hint}
           value={data.address.addressLine2}
           onChange={(v) => updateAddress({ addressLine2: v })}
         />
         <TextInput
           id="municipality"
-          label="Village / Town / City"
+          label={fmt.municipality.label}
+          hint={fmt.municipality.hint}
           value={data.address.municipality}
           onChange={(v) => updateAddress({ municipality: v })}
           error={errors.municipality}
         />
         <TextInput
           id="administrativeArea"
-          label="County / state / province (optional)"
+          label={fmt.administrativeArea.label}
+          hint={fmt.administrativeArea.hint}
           value={data.address.administrativeArea}
           onChange={(v) => updateAddress({ administrativeArea: v })}
         />
         <TextInput
           id="postcode"
-          label={isPostcodeRequired(data.country) ? 'Postcode' : 'Postcode (optional)'}
+          label={fmt.postcode.label}
+          hint={fmt.postcode.hint}
           value={data.address.postcode}
           onChange={(v) => updateAddress({ postcode: v })}
           error={errors.postcode}
