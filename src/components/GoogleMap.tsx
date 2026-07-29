@@ -79,7 +79,7 @@ export function GoogleMap({
         if (cancelled || !canvasRef.current) return
         const map = new google.maps.Map(canvasRef.current, {
           center: coordinates,
-          zoom: 16,
+          zoom: 18,
           disableDefaultUI: !interactive,
           gestureHandling: interactive ? 'greedy' : 'none',
           keyboardShortcuts: interactive,

@@ -123,6 +123,7 @@ export function FindVenueSearchFirst({
             <PlacesSearch
               onSelect={handlePlace}
               countryCode={countryCodeForCountry(data.country)}
+              enableFallbackOptions
             />
 
             {searchDone && (
