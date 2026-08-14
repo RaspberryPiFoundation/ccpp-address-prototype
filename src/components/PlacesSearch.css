@@ -295,6 +295,15 @@
   margin-top: 0;
 }
 
+/* Slotted content between the search field and the coordinates row — spaced like
+   a step section rather than like the fields inside the search group. */
+.search-slot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: var(--space-1) 0;
+}
+
 /* The coordinates row when lifted out of the fallback panel, under the search. */
 .coords-row-below {
   display: flex;

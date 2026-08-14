@@ -42,6 +42,13 @@ interface PlacesSearchProps {
   label?: string
   /** Hint under the label, shown in the default address mode only. */
   hint?: ReactNode
+  /**
+   * Content slotted between the search field and the "or / Enter coordinates"
+   * row — the map and location description once a search has succeeded.
+   */
+  children?: ReactNode
+  /** Called when the user empties the search field. */
+  onCleared?: () => void
 }
 
 // A menu row plus how to turn it into a full selection when chosen.
@@ -77,6 +84,8 @@ export function PlacesSearch({
       Search the venue’s address or paste a <strong>Google Maps Plus Code</strong>.
     </>
   ),
+  children,
+  onCleared,
 }: PlacesSearchProps) {
   const [query, setQuery] = useState('')
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
@@ -221,6 +230,8 @@ export function PlacesSearch({
     setShowOptions(false)
     setActiveIndex(-1)
     window.clearTimeout(debounceRef.current)
+    // Emptying the field undoes the search, so anything it revealed goes away.
+    if (value.trim() === '') onCleared?.()
     if (value.trim().length < 3) {
       setSuggestions([])
       setOpen(false)
@@ -705,6 +716,7 @@ export function PlacesSearch({
           )}
         </div>
       )}
+      {children && <div className="search-slot">{children}</div>}
       {coordsRowBelowSearch && searchMode === 'address' && (
         <div className="coords-row-below">{coordsRow}</div>
       )}

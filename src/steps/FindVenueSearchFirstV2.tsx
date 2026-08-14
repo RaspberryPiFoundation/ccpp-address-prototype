@@ -132,47 +132,48 @@ export function FindVenueSearchFirstV2({
               coordsRowBelowSearch
               label="Search for your venue"
               hint="Search by address, place, or Plus Code"
-            />
-
-            {searchDone && (
-              <>
-                <div className="field">
-                  <div className="label-wrapper">
-                    <label>Fine-tune the location on the map</label>
-                    <span className="hint">
-                      Tap anywhere on the map to place the pin, or drag the map to move it. To zoom,
-                      pinch on a touchscreen or hold Ctrl (⌘ on Mac) and scroll. Then confirm the
-                      location.
-                    </span>
+              onCleared={() => setSearchDone(false)}
+            >
+              {searchDone && (
+                <>
+                  <div className="field">
+                    <div className="label-wrapper">
+                      <label>Fine-tune the location on the map</label>
+                      <span className="hint">
+                        Tap anywhere on the map to place the pin, or drag the map to move it. To
+                        zoom, pinch on a touchscreen or hold Ctrl (⌘ on Mac) and scroll. Then
+                        confirm the location.
+                      </span>
+                    </div>
+                    <MapComponent
+                      key="edit"
+                      variant="full"
+                      coordinates={coords}
+                      interactive
+                      onCoordinatesChange={setCoords}
+                      onMapClick={(c) => setCoords(c)}
+                      onPoiSelect={handlePoiSelect}
+                    />
                   </div>
-                  <MapComponent
-                    key="edit"
-                    variant="full"
-                    coordinates={coords}
-                    interactive
-                    onCoordinatesChange={setCoords}
-                    onMapClick={(c) => setCoords(c)}
-                    onPoiSelect={handlePoiSelect}
+
+                  <PinCountryWarning
+                    pin={coords}
+                    country={data.country}
+                    onChangeCountry={onChangeCountry}
+                    onBlockingChange={setPinOutsideCountry}
                   />
-                </div>
 
-                <PinCountryWarning
-                  pin={coords}
-                  country={data.country}
-                  onChangeCountry={onChangeCountry}
-                  onBlockingChange={setPinOutsideCountry}
-                />
-
-                <TextArea
-                  id="locationDescription"
-                  label="Describe the location (optional)"
-                  hint="If you’re struggling to place the pin exactly, add an explanation of where your venue is. Include nearby landmarks, road names, or anything that helps someone find your venue."
-                  value={data.locationDescription}
-                  onChange={(v) => update({ locationDescription: v })}
-                  placeholder="e.g. Kibera Primary School, next to the water tower, off Ngong Road"
-                />
-              </>
-            )}
+                  <TextArea
+                    id="locationDescription"
+                    label="Describe the location (optional)"
+                    hint="If you’re struggling to place the pin exactly, add an explanation of where your venue is. Include nearby landmarks, road names, or anything that helps someone find your venue."
+                    value={data.locationDescription}
+                    onChange={(v) => update({ locationDescription: v })}
+                    placeholder="e.g. Kibera Primary School, next to the water tower, off Ngong Road"
+                  />
+                </>
+              )}
+            </PlacesSearch>
           </>
         )}
 
