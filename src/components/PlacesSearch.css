@@ -204,6 +204,12 @@
 .coords-entry .search-mode-help {
   margin-top: var(--space-2);
 }
+/* Above the lat/long fields: 16px clear on both sides, counting the 8px the
+   field group already puts above it. */
+.coords-entry .search-mode-help-first {
+  margin-top: var(--space-1);
+  margin-bottom: var(--space-2);
+}
 .coords-submit {
   margin-top: var(--space-2);
   padding: 10px 24px;

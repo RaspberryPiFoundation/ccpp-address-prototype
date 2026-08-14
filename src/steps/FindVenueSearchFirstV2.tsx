@@ -3,7 +3,12 @@ import { ProgressBar } from '../components/ProgressBar'
 import { TextInput, TextArea, Checkbox } from '../components/Fields'
 import { Button } from '../components/Button'
 import { GoogleMap, type Coordinates, type MapProps } from '../components/GoogleMap'
-import { PlacesSearch, type PlaceSelection } from '../components/PlacesSearch'
+import {
+  PlacesSearch,
+  type PlaceSelection,
+  type PlacesSearchHandle,
+  type SearchMode,
+} from '../components/PlacesSearch'
 import { AddressPinWarning } from '../components/AddressPinWarning'
 import { PinCountryWarning } from '../components/PinCountryWarning'
 import { ArrowBackIcon } from '../components/icons'
@@ -53,6 +58,10 @@ export function FindVenueSearchFirstV2({
   const [pinOutsideCountry, setPinOutsideCountry] = useState(false)
   // Whether a search has returned a result — the map only appears after this.
   const [searchDone, setSearchDone] = useState(false)
+  // How the search field is scoped. When it isn't the plain address search,
+  // "Back" returns it to that rather than leaving the step.
+  const [searchMode, setSearchMode] = useState<SearchMode>('address')
+  const searchRef = useRef<PlacesSearchHandle>(null)
   // The live pin position, updated by search results and map drags.
   const [coords, setCoords] = useState<Coordinates>(coordinates)
   // Address-field labels and hints tailored to the chosen country.
@@ -87,6 +96,14 @@ export function FindVenueSearchFirstV2({
 
   const handleEditLocation = () => {
     setLocationConfirmed(false)
+  }
+
+  // Back unwinds one step at a time: out of the confirmed address, then out of a
+  // re-scoped search (Plus Code / landmark / coordinates), then out of the step.
+  const handleBack = () => {
+    if (locationConfirmed) handleEditLocation()
+    else if (searchMode !== 'address') searchRef.current?.resetSearch()
+    else onBack()
   }
 
   const handleContinue = () => {
@@ -125,6 +142,7 @@ export function FindVenueSearchFirstV2({
         {!locationConfirmed && (
           <>
             <PlacesSearch
+              ref={searchRef}
               onSelect={handlePlace}
               countryCode={countryCodeForCountry(data.country)}
               enableFallbackOptions
@@ -132,7 +150,12 @@ export function FindVenueSearchFirstV2({
               coordsRowBelowSearch
               label="Search for your venue"
               hint="Search by address, place, or Plus Code"
+              coordsLabel="Enter coordinates"
+              coordsHint="Enter the latitude and longitude of your club venue."
+              coordsHelpFirst
               onCleared={() => setSearchDone(false)}
+              modeExitViaBack
+              onModeChange={setSearchMode}
             >
               {searchDone && (
                 <>
@@ -271,7 +294,7 @@ export function FindVenueSearchFirstV2({
         <Button
           variant="secondary"
           icon={<ArrowBackIcon />}
-          onClick={locationConfirmed ? handleEditLocation : onBack}
+          onClick={handleBack}
         >
           Back
         </Button>
