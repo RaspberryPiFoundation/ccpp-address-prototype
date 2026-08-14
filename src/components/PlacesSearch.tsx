@@ -589,9 +589,6 @@ export function PlacesSearch({
           role="status"
         >
           <p className="no-results-title">
-            <span className="no-results-icon">
-              <InfoIcon />
-            </span>
             {noResults ? 'Your search didn’t return any results' : 'Can’t find your address?'}
           </p>
           <p className="no-results-text">

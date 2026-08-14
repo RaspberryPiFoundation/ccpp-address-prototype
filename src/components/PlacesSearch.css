@@ -278,11 +278,6 @@
   font-weight: var(--fw-bold);
   color: var(--rpf-text);
 }
-.no-results-icon {
-  display: flex;
-  flex-shrink: 0;
-  color: var(--alert-info);
-}
 .no-results-text {
   margin: 0 0 var(--space-2);
   font-size: var(--fs-1);
