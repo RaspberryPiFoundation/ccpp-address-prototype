@@ -129,6 +129,7 @@ export function FindVenueSearchFirstV2({
               countryCode={countryCodeForCountry(data.country)}
               enableFallbackOptions
               optionsAsAccordions
+              coordsRowBelowSearch
               label="Search for your venue"
               hint="Search by address, place, or Plus Code"
             />

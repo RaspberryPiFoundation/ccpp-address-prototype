@@ -290,6 +290,22 @@
   flex-direction: column;
   gap: var(--space-1);
 }
+/* Panel pulled up under the search field: the field group's own 8px gap is the
+   whole spacing, so drop the margin that separates it elsewhere. */
+.no-results-tight {
+  margin-top: 0;
+}
+
+/* The coordinates row when lifted out of the fallback panel, under the search. */
+.coords-row-below {
+  display: flex;
+  flex-direction: column;
+  /* Matches the space above the divider, so "Or" sits centred between the
+     locate link and the coordinates row. */
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
 /* Expandable fallback rows: a header button plus its instructions. */
 .option-accordion {
   background: var(--rpf-white);

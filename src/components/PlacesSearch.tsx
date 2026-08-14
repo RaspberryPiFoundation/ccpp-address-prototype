@@ -33,6 +33,11 @@ interface PlacesSearchProps {
    * to coordinate entry — instead of three flat buttons.
    */
   optionsAsAccordions?: boolean
+  /**
+   * Lift the "Enter coordinates" row out of the fallback panel to sit under the
+   * search field, so it is offered up front rather than only after a failure.
+   */
+  coordsRowBelowSearch?: boolean
   /** Field label. Defaults to "Search for the address". */
   label?: string
   /** Hint under the label, shown in the default address mode only. */
@@ -65,6 +70,7 @@ export function PlacesSearch({
   countryCode,
   enableFallbackOptions,
   optionsAsAccordions,
+  coordsRowBelowSearch,
   label = 'Search for the address',
   hint = (
     <>
@@ -360,6 +366,27 @@ export function PlacesSearch({
     )
   }
 
+  // "Or / Enter coordinates" — either the last item in the fallback panel, or,
+  // with coordsRowBelowSearch, a permanent row under the search field.
+  const coordsRow = (
+    <>
+      <div className="or-divider">
+        <span className="line" />
+        <span>Or</span>
+        <span className="line" />
+      </div>
+      <button type="button" className="result-option" onClick={startCoordsMode}>
+        <span className="result-option-icon">
+          <LocationIcon />
+        </span>
+        <span className="result-option-title">Enter coordinates</span>
+        <span className="result-option-chevron">
+          <ArrowRightIcon />
+        </span>
+      </button>
+    </>
+  )
+
   return (
     <div className="field">
       <div className="label-wrapper">
@@ -550,7 +577,10 @@ export function PlacesSearch({
         </div>
       )}
       {(noResults || showOptions) && enableFallbackOptions && searchMode === 'address' && (
-        <div className="no-results" role="status">
+        <div
+          className={`no-results${coordsRowBelowSearch ? ' no-results-tight' : ''}`}
+          role="status"
+        >
           <p className="no-results-title">
             <span className="no-results-icon">
               <InfoIcon />
@@ -620,21 +650,7 @@ export function PlacesSearch({
                 </div>
               ))}
 
-              <div className="or-divider">
-                <span className="line" />
-                <span>Or</span>
-                <span className="line" />
-              </div>
-
-              <button type="button" className="result-option" onClick={startCoordsMode}>
-                <span className="result-option-icon">
-                  <LocationIcon />
-                </span>
-                <span className="result-option-title">Enter coordinates</span>
-                <span className="result-option-chevron">
-                  <ArrowRightIcon />
-                </span>
-              </button>
+              {!coordsRowBelowSearch && coordsRow}
             </div>
           ) : (
           <div className="no-results-options">
@@ -684,6 +700,9 @@ export function PlacesSearch({
           </div>
           )}
         </div>
+      )}
+      {coordsRowBelowSearch && searchMode === 'address' && (
+        <div className="coords-row-below">{coordsRow}</div>
       )}
     </div>
   )
