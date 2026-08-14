@@ -2,6 +2,7 @@
 // the "Where is the club venue?" step; everything else in the flow is shared.
 // See Home.tsx for the front page that launches them.
 export type Variant =
+  | 'search-first-v2'
   | 'as-is'
   | 'reveal-on-pin'
   | 'confirm-button'
@@ -16,6 +17,18 @@ export interface VariantInfo {
 }
 
 export const VARIANTS: VariantInfo[] = [
+  {
+    id: 'search-first-v2',
+    title: 'Search-first, then map (v2)',
+    summary:
+      'A copy of “Search-first, then map” that we’re iterating on. Identical to it for now.',
+  },
+  {
+    id: 'search-first',
+    title: 'Search-first, then map',
+    summary:
+      'Only the address search shows to start. Once a search returns a result the map appears to fine-tune the pin, then you confirm the address. No coordinate entry.',
+  },
   {
     id: 'as-is',
     title: 'Form as-is',
@@ -33,12 +46,6 @@ export const VARIANTS: VariantInfo[] = [
     title: 'Map-first, then confirm',
     summary:
       'Name the venue and position the pin on a large movable map. Clicking “Confirm venue location” reveals the address to check and freezes the map until you edit it again.',
-  },
-  {
-    id: 'search-first',
-    title: 'Search-first, then map',
-    summary:
-      'Only the address search shows to start. Once a search returns a result the map appears to fine-tune the pin, then you confirm the address. No coordinate entry.',
   },
   {
     id: 'guided',

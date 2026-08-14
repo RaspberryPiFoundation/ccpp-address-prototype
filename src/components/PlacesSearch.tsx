@@ -27,6 +27,12 @@ interface PlacesSearchProps {
    * re-scoping this same field. Search-first only.
    */
   enableFallbackOptions?: boolean
+  /**
+   * Show the fallback options panel above the search field at all times, rather
+   * than only after a failed search or the "Can't see your address?" prompt.
+   * Requires enableFallbackOptions.
+   */
+  alwaysShowOptions?: boolean
 }
 
 // A menu row plus how to turn it into a full selection when chosen.
@@ -54,6 +60,7 @@ export function PlacesSearch({
   onSelect,
   countryCode,
   enableFallbackOptions,
+  alwaysShowOptions,
 }: PlacesSearchProps) {
   const [query, setQuery] = useState('')
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
@@ -341,8 +348,79 @@ export function PlacesSearch({
     )
   }
 
+  // The "ways to find your venue" panel. With alwaysShowOptions it sits above the
+  // search field and is permanently visible; otherwise it appears below the field
+  // only after a failed search or the "Can't see your address?" prompt.
+  const optionsPanel =
+    enableFallbackOptions &&
+    searchMode === 'address' &&
+    (alwaysShowOptions || noResults || showOptions) ? (
+      <div
+        className={`no-results${alwaysShowOptions ? ' no-results-above' : ''}`}
+        role="status"
+      >
+        <p className="no-results-title">
+          <span className="no-results-icon">
+            <InfoIcon />
+          </span>
+          {noResults ? 'Your search didn’t return any results' : 'Can’t find your address?'}
+        </p>
+        <p className="no-results-text">
+          {noResults
+            ? 'Here are a few ways to find your venue:'
+            : 'No problem — try one of these instead:'}
+        </p>
+        <div className="no-results-options">
+          <button type="button" className="result-option" onClick={() => startModeSearch('landmark')}>
+            <span className="result-option-icon">
+              <PinIcon size={22} />
+            </span>
+            <span className="result-option-text">
+              <span className="result-option-title">Search for a nearby landmark</span>
+              <span className="result-option-sub">
+                Try a nearby place, town, or landmark — you’ll drag the pin onto your exact venue
+                next.
+              </span>
+            </span>
+            <span className="result-option-chevron">
+              <ChevronRightIcon />
+            </span>
+          </button>
+          <button type="button" className="result-option" onClick={() => startModeSearch('pluscode')}>
+            <span className="result-option-icon">
+              <PlusCodeIcon size={22} />
+            </span>
+            <span className="result-option-text">
+              <span className="result-option-title">Use a Google Maps Plus Code</span>
+              <span className="result-option-sub">
+                A short code that pinpoints your venue — even when it has no address.
+              </span>
+            </span>
+            <span className="result-option-chevron">
+              <ChevronRightIcon />
+            </span>
+          </button>
+          <button type="button" className="result-option" onClick={startCoordsMode}>
+            <span className="result-option-icon">
+              <LocationIcon />
+            </span>
+            <span className="result-option-text">
+              <span className="result-option-title">Enter coordinates</span>
+              <span className="result-option-sub">
+                Already have latitude and longitude? Enter them to drop the pin directly.
+              </span>
+            </span>
+            <span className="result-option-chevron">
+              <ChevronRightIcon />
+            </span>
+          </button>
+        </div>
+      </div>
+    ) : null
+
   return (
     <div className="field">
+      {alwaysShowOptions && optionsPanel}
       <div className="label-wrapper">
         <label htmlFor="places-search">Search for the address</label>
         {searchMode === 'address' ? (
@@ -422,17 +500,20 @@ export function PlacesSearch({
                     </li>
                   ))}
                 </ul>
-                {enableFallbackOptions && searchMode === 'address' && suggestions.length > 0 && (
-                  <button type="button" className="places-help" onClick={openOptions}>
-                    <span className="places-help-icon">
-                      <InfoIcon />
-                    </span>
-                    <span className="places-help-title">Can’t see your address?</span>
-                    <span className="places-help-chevron">
-                      <ChevronRightIcon />
-                    </span>
-                  </button>
-                )}
+                {enableFallbackOptions &&
+                  !alwaysShowOptions &&
+                  searchMode === 'address' &&
+                  suggestions.length > 0 && (
+                    <button type="button" className="places-help" onClick={openOptions}>
+                      <span className="places-help-icon">
+                        <InfoIcon />
+                      </span>
+                      <span className="places-help-title">Can’t see your address?</span>
+                      <span className="places-help-chevron">
+                        <ChevronRightIcon />
+                      </span>
+                    </button>
+                  )}
               </>
             )}
           </div>
@@ -532,66 +613,7 @@ export function PlacesSearch({
           </span>
         </div>
       )}
-      {(noResults || showOptions) && enableFallbackOptions && searchMode === 'address' && (
-        <div className="no-results" role="status">
-          <p className="no-results-title">
-            <span className="no-results-icon">
-              <InfoIcon />
-            </span>
-            {noResults ? 'Your search didn’t return any results' : 'Can’t find your address?'}
-          </p>
-          <p className="no-results-text">
-            {noResults
-              ? 'Here are a few ways to find your venue:'
-              : 'No problem — try one of these instead:'}
-          </p>
-          <div className="no-results-options">
-            <button type="button" className="result-option" onClick={() => startModeSearch('landmark')}>
-              <span className="result-option-icon">
-                <PinIcon size={22} />
-              </span>
-              <span className="result-option-text">
-                <span className="result-option-title">Search for a nearby landmark</span>
-                <span className="result-option-sub">
-                  Try a nearby place, town, or landmark — you’ll drag the pin onto your exact venue
-                  next.
-                </span>
-              </span>
-              <span className="result-option-chevron">
-                <ChevronRightIcon />
-              </span>
-            </button>
-            <button type="button" className="result-option" onClick={() => startModeSearch('pluscode')}>
-              <span className="result-option-icon">
-                <PlusCodeIcon size={22} />
-              </span>
-              <span className="result-option-text">
-                <span className="result-option-title">Use a Google Maps Plus Code</span>
-                <span className="result-option-sub">
-                  A short code that pinpoints your venue — even when it has no address.
-                </span>
-              </span>
-              <span className="result-option-chevron">
-                <ChevronRightIcon />
-              </span>
-            </button>
-            <button type="button" className="result-option" onClick={startCoordsMode}>
-              <span className="result-option-icon">
-                <LocationIcon />
-              </span>
-              <span className="result-option-text">
-                <span className="result-option-title">Enter coordinates</span>
-                <span className="result-option-sub">
-                  Already have latitude and longitude? Enter them to drop the pin directly.
-                </span>
-              </span>
-              <span className="result-option-chevron">
-                <ChevronRightIcon />
-              </span>
-            </button>
-          </div>
-        </div>
-      )}
+      {!alwaysShowOptions && optionsPanel}
     </div>
   )
 }

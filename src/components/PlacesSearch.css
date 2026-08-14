@@ -264,6 +264,11 @@
   border: 1px solid var(--rpf-grey-300);
   border-radius: var(--radius-sm);
 }
+/* The panel sitting above the search field rather than below it. */
+.no-results-above {
+  margin-top: 0;
+  margin-bottom: var(--space-2);
+}
 .no-results-title {
   display: flex;
   align-items: center;
