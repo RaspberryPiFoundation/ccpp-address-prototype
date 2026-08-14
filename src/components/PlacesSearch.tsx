@@ -445,7 +445,9 @@ export function PlacesSearch({
             }
           />
         </div>
-        {open && (
+        {/* Only when there is something to show — an empty menu renders as a
+            stray grey line under the field. */}
+        {open && (loading || suggestions.length > 0) && (
           <div className="places-menu">
             {loading ? (
               <div className="places-spinner">Searching…</div>
@@ -555,7 +557,12 @@ export function PlacesSearch({
         </div>
       )}
       {searchMode === 'address' && (
-        <button type="button" className="locate-link" onClick={useMyLocation} disabled={locating}>
+        <button
+          type="button"
+          className={`locate-link${coordsRowBelowSearch ? ' locate-link-flush' : ''}`}
+          onClick={useMyLocation}
+          disabled={locating}
+        >
           {locating ? <SpinnerIcon /> : <LocationIcon />}
           {locating ? 'Getting your location…' : 'Use my current location'}
         </button>

@@ -234,6 +234,10 @@
   font-weight: var(--fw-bold);
   cursor: pointer;
 }
+/* Drop the extra 4px so the space under the field matches the space above it. */
+.locate-link-flush {
+  margin-top: 0;
+}
 .locate-link:hover {
   text-decoration: underline;
 }
