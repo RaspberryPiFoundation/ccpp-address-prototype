@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, type ReactNode } from 'react'
 import './PlacesSearch.css'
-import { SearchIcon, ErrorIcon, LocationIcon, SpinnerIcon, InfoIcon, ChevronRightIcon, PinIcon, PlusCodeIcon, CloseIcon } from './icons'
+import { SearchIcon, ErrorIcon, LocationIcon, SpinnerIcon, InfoIcon, ChevronRightIcon, PinIcon, PlusCodeIcon, CloseIcon, ArrowRightIcon, PlusIcon, MinusIcon } from './icons'
 import {
   loadGoogleMaps,
   parseAdrAddress,
@@ -28,11 +28,15 @@ interface PlacesSearchProps {
    */
   enableFallbackOptions?: boolean
   /**
-   * Show the fallback options panel above the search field at all times, rather
-   * than only after a failed search or the "Can't see your address?" prompt.
-   * Requires enableFallbackOptions.
+   * Present the fallback options as two expandable rows (landmark, Plus Code)
+   * holding their own instructions, then an "or" divider and a row that switches
+   * to coordinate entry — instead of three flat buttons.
    */
-  alwaysShowOptions?: boolean
+  optionsAsAccordions?: boolean
+  /** Field label. Defaults to "Search for the address". */
+  label?: string
+  /** Hint under the label, shown in the default address mode only. */
+  hint?: ReactNode
 }
 
 // A menu row plus how to turn it into a full selection when chosen.
@@ -60,7 +64,13 @@ export function PlacesSearch({
   onSelect,
   countryCode,
   enableFallbackOptions,
-  alwaysShowOptions,
+  optionsAsAccordions,
+  label = 'Search for the address',
+  hint = (
+    <>
+      Search the venue’s address or paste a <strong>Google Maps Plus Code</strong>.
+    </>
+  ),
 }: PlacesSearchProps) {
   const [query, setQuery] = useState('')
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
@@ -84,6 +94,8 @@ export function PlacesSearch({
   const [locateStatus, setLocateStatus] = useState<string | null>(null)
   // Index of the keyboard-highlighted suggestion (-1 = none).
   const [activeIndex, setActiveIndex] = useState(-1)
+  // Which fallback row is expanded, when they render as accordions.
+  const [openOption, setOpenOption] = useState<'landmark' | 'pluscode' | null>(null)
 
   const geocoderRef = useRef<google.maps.Geocoder | null>(null)
   const readyRef = useRef(false)
@@ -348,85 +360,12 @@ export function PlacesSearch({
     )
   }
 
-  // The "ways to find your venue" panel. With alwaysShowOptions it sits above the
-  // search field and is permanently visible; otherwise it appears below the field
-  // only after a failed search or the "Can't see your address?" prompt.
-  const optionsPanel =
-    enableFallbackOptions &&
-    searchMode === 'address' &&
-    (alwaysShowOptions || noResults || showOptions) ? (
-      <div
-        className={`no-results${alwaysShowOptions ? ' no-results-above' : ''}`}
-        role="status"
-      >
-        <p className="no-results-title">
-          <span className="no-results-icon">
-            <InfoIcon />
-          </span>
-          {noResults ? 'Your search didn’t return any results' : 'Can’t find your address?'}
-        </p>
-        <p className="no-results-text">
-          {noResults
-            ? 'Here are a few ways to find your venue:'
-            : 'No problem — try one of these instead:'}
-        </p>
-        <div className="no-results-options">
-          <button type="button" className="result-option" onClick={() => startModeSearch('landmark')}>
-            <span className="result-option-icon">
-              <PinIcon size={22} />
-            </span>
-            <span className="result-option-text">
-              <span className="result-option-title">Search for a nearby landmark</span>
-              <span className="result-option-sub">
-                Try a nearby place, town, or landmark — you’ll drag the pin onto your exact venue
-                next.
-              </span>
-            </span>
-            <span className="result-option-chevron">
-              <ChevronRightIcon />
-            </span>
-          </button>
-          <button type="button" className="result-option" onClick={() => startModeSearch('pluscode')}>
-            <span className="result-option-icon">
-              <PlusCodeIcon size={22} />
-            </span>
-            <span className="result-option-text">
-              <span className="result-option-title">Use a Google Maps Plus Code</span>
-              <span className="result-option-sub">
-                A short code that pinpoints your venue — even when it has no address.
-              </span>
-            </span>
-            <span className="result-option-chevron">
-              <ChevronRightIcon />
-            </span>
-          </button>
-          <button type="button" className="result-option" onClick={startCoordsMode}>
-            <span className="result-option-icon">
-              <LocationIcon />
-            </span>
-            <span className="result-option-text">
-              <span className="result-option-title">Enter coordinates</span>
-              <span className="result-option-sub">
-                Already have latitude and longitude? Enter them to drop the pin directly.
-              </span>
-            </span>
-            <span className="result-option-chevron">
-              <ChevronRightIcon />
-            </span>
-          </button>
-        </div>
-      </div>
-    ) : null
-
   return (
     <div className="field">
-      {alwaysShowOptions && optionsPanel}
       <div className="label-wrapper">
-        <label htmlFor="places-search">Search for the address</label>
+        <label htmlFor="places-search">{label}</label>
         {searchMode === 'address' ? (
-          <span className="hint">
-            Search the venue’s address or paste a <strong>Google Maps Plus Code</strong>.
-          </span>
+          <span className="hint">{hint}</span>
         ) : (
           <span className="search-mode-tag">
             <LocationIcon size={16} />
@@ -500,20 +439,17 @@ export function PlacesSearch({
                     </li>
                   ))}
                 </ul>
-                {enableFallbackOptions &&
-                  !alwaysShowOptions &&
-                  searchMode === 'address' &&
-                  suggestions.length > 0 && (
-                    <button type="button" className="places-help" onClick={openOptions}>
-                      <span className="places-help-icon">
-                        <InfoIcon />
-                      </span>
-                      <span className="places-help-title">Can’t see your address?</span>
-                      <span className="places-help-chevron">
-                        <ChevronRightIcon />
-                      </span>
-                    </button>
-                  )}
+                {enableFallbackOptions && searchMode === 'address' && suggestions.length > 0 && (
+                  <button type="button" className="places-help" onClick={openOptions}>
+                    <span className="places-help-icon">
+                      <InfoIcon />
+                    </span>
+                    <span className="places-help-title">Can’t see your address?</span>
+                    <span className="places-help-chevron">
+                      <ChevronRightIcon />
+                    </span>
+                  </button>
+                )}
               </>
             )}
           </div>
@@ -613,7 +549,142 @@ export function PlacesSearch({
           </span>
         </div>
       )}
-      {!alwaysShowOptions && optionsPanel}
+      {(noResults || showOptions) && enableFallbackOptions && searchMode === 'address' && (
+        <div className="no-results" role="status">
+          <p className="no-results-title">
+            <span className="no-results-icon">
+              <InfoIcon />
+            </span>
+            {noResults ? 'Your search didn’t return any results' : 'Can’t find your address?'}
+          </p>
+          <p className="no-results-text">
+            {noResults
+              ? 'Here are a few ways to find your venue:'
+              : 'No problem — try one of these instead:'}
+          </p>
+          {optionsAsAccordions ? (
+            <div className="no-results-options">
+              {(
+                [
+                  {
+                    key: 'landmark' as const,
+                    // Sized by width so the taller pin (4:3) matches the 22px
+                    // square Plus Code icon and the 20px coordinates icon.
+                    icon: <PinIcon size={16} color="currentColor" />,
+                    title: 'Search for a nearby landmark',
+                    body: (
+                      <p>
+                        Search for a nearby place, town, or landmark in the field above — you’ll
+                        drag the pin onto your exact venue next.
+                      </p>
+                    ),
+                  },
+                  {
+                    key: 'pluscode' as const,
+                    icon: <PlusCodeIcon size={22} />,
+                    title: 'Use a Google Maps Plus Code',
+                    body: (
+                      <>
+                        <ol>
+                          <li>Open Google Maps and find your venue.</li>
+                          <li>Tap and hold the exact spot to drop a pin.</li>
+                          <li>Copy the Plus Code shown (e.g. 9G5H+3M) and paste it above.</li>
+                        </ol>
+                        <a href="https://plus.codes/" target="_blank" rel="noreferrer">
+                          What’s a Plus Code?
+                        </a>
+                      </>
+                    ),
+                  },
+                ]
+              ).map((opt) => (
+                <div
+                  key={opt.key}
+                  className={`option-accordion${openOption === opt.key ? ' open' : ''}`}
+                >
+                  <button
+                    type="button"
+                    className="option-accordion-head"
+                    aria-expanded={openOption === opt.key}
+                    onClick={() => setOpenOption((o) => (o === opt.key ? null : opt.key))}
+                  >
+                    <span className="result-option-icon">{opt.icon}</span>
+                    <span className="result-option-title">{opt.title}</span>
+                    <span className="option-accordion-toggle">
+                      {openOption === opt.key ? <MinusIcon /> : <PlusIcon />}
+                    </span>
+                  </button>
+                  {openOption === opt.key && (
+                    <div className="option-accordion-body">{opt.body}</div>
+                  )}
+                </div>
+              ))}
+
+              <div className="or-divider">
+                <span className="line" />
+                <span>Or</span>
+                <span className="line" />
+              </div>
+
+              <button type="button" className="result-option" onClick={startCoordsMode}>
+                <span className="result-option-icon">
+                  <LocationIcon />
+                </span>
+                <span className="result-option-title">Enter coordinates</span>
+                <span className="result-option-chevron">
+                  <ArrowRightIcon />
+                </span>
+              </button>
+            </div>
+          ) : (
+          <div className="no-results-options">
+            <button type="button" className="result-option" onClick={() => startModeSearch('landmark')}>
+              <span className="result-option-icon">
+                <PinIcon size={22} />
+              </span>
+              <span className="result-option-text">
+                <span className="result-option-title">Search for a nearby landmark</span>
+                <span className="result-option-sub">
+                  Try a nearby place, town, or landmark — you’ll drag the pin onto your exact venue
+                  next.
+                </span>
+              </span>
+              <span className="result-option-chevron">
+                <ChevronRightIcon />
+              </span>
+            </button>
+            <button type="button" className="result-option" onClick={() => startModeSearch('pluscode')}>
+              <span className="result-option-icon">
+                <PlusCodeIcon size={22} />
+              </span>
+              <span className="result-option-text">
+                <span className="result-option-title">Use a Google Maps Plus Code</span>
+                <span className="result-option-sub">
+                  A short code that pinpoints your venue — even when it has no address.
+                </span>
+              </span>
+              <span className="result-option-chevron">
+                <ChevronRightIcon />
+              </span>
+            </button>
+            <button type="button" className="result-option" onClick={startCoordsMode}>
+              <span className="result-option-icon">
+                <LocationIcon />
+              </span>
+              <span className="result-option-text">
+                <span className="result-option-title">Enter coordinates</span>
+                <span className="result-option-sub">
+                  Already have latitude and longitude? Enter them to drop the pin directly.
+                </span>
+              </span>
+              <span className="result-option-chevron">
+                <ChevronRightIcon />
+              </span>
+            </button>
+          </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

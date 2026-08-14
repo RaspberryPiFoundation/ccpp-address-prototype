@@ -128,7 +128,9 @@ export function FindVenueSearchFirstV2({
               onSelect={handlePlace}
               countryCode={countryCodeForCountry(data.country)}
               enableFallbackOptions
-              alwaysShowOptions
+              optionsAsAccordions
+              label="Search for your venue"
+              hint="Search by address, place, or Plus Code"
             />
 
             {searchDone && (
