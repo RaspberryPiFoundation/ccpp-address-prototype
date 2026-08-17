@@ -155,7 +155,12 @@ export function FindVenueSearchFirstV2({
               coordsHelpFirst
               onCleared={() => setSearchDone(false)}
               modeExitViaBack
-              onModeChange={setSearchMode}
+              onModeChange={(mode) => {
+                setSearchMode(mode)
+                // Re-scoping the field starts the search over, so the map and
+                // description go until the new route produces a location.
+                setSearchDone(false)
+              }}
             >
               {searchDone && (
                 <>
