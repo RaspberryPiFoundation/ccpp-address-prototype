@@ -1,6 +1,13 @@
-import { useState, useRef, useEffect } from 'react'
+import {
+  useState,
+  useRef,
+  useEffect,
+  useImperativeHandle,
+  forwardRef,
+  type ReactNode,
+} from 'react'
 import './PlacesSearch.css'
-import { SearchIcon, ErrorIcon, LocationIcon, SpinnerIcon, InfoIcon, ChevronRightIcon, PinIcon, PlusCodeIcon, CloseIcon } from './icons'
+import { SearchIcon, ErrorIcon, LocationIcon, SpinnerIcon, InfoIcon, ChevronRightIcon, PinIcon, PlusCodeIcon, CloseIcon, ArrowRightIcon, PlusIcon, MinusIcon } from './icons'
 import {
   loadGoogleMaps,
   parseAdrAddress,
@@ -27,6 +34,49 @@ interface PlacesSearchProps {
    * re-scoping this same field. Search-first only.
    */
   enableFallbackOptions?: boolean
+  /**
+   * Present the fallback options as two expandable rows (landmark, Plus Code)
+   * holding their own instructions, then an "or" divider and a row that switches
+   * to coordinate entry — instead of three flat buttons.
+   */
+  optionsAsAccordions?: boolean
+  /**
+   * Lift the "Enter coordinates" row out of the fallback panel to sit under the
+   * search field, so it is offered up front rather than only after a failure.
+   */
+  coordsRowBelowSearch?: boolean
+  /** Field label. Defaults to "Search for the address". */
+  label?: string
+  /** Hint under the label, shown in the default address mode only. */
+  hint?: ReactNode
+  /** Label used in coordinate mode. Falls back to the standard label. */
+  coordsLabel?: string
+  /** Hint under the coordinate-mode label. Only shown when coordsLabel is set. */
+  coordsHint?: ReactNode
+  /** Put the "How to find your coordinates" help above the lat/long fields. */
+  coordsHelpFirst?: boolean
+  /**
+   * Content slotted between the search field and the "or / Enter coordinates"
+   * row — the map and location description once a search has succeeded.
+   */
+  children?: ReactNode
+  /** Called when the user empties the search field. */
+  onCleared?: () => void
+  /**
+   * Drop the "Searching by …" chip that exits a re-scoped search. The step is
+   * then responsible for offering the way back — see the exposed resetSearch.
+   */
+  modeExitViaBack?: boolean
+  /** Called whenever the field is re-scoped, so the step can adapt its Back button. */
+  onModeChange?: (mode: SearchMode) => void
+}
+
+/** How the search field is currently scoped. */
+export type SearchMode = 'address' | 'landmark' | 'pluscode' | 'coords'
+
+/** Imperative handle: return the field to the default name/address search. */
+export interface PlacesSearchHandle {
+  resetSearch: () => void
 }
 
 // A menu row plus how to turn it into a full selection when chosen.
@@ -50,11 +100,27 @@ function looksLikePlusCode(value: string): boolean {
  * Plus Codes are resolved via the Geocoder. A selection re-centres the map and
  * autofills the address form.
  */
-export function PlacesSearch({
+export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
+  function PlacesSearch({
   onSelect,
   countryCode,
   enableFallbackOptions,
-}: PlacesSearchProps) {
+  optionsAsAccordions,
+  coordsRowBelowSearch,
+  label = 'Search for the address',
+  hint = (
+    <>
+      Search the venue’s address or paste a <strong>Google Maps Plus Code</strong>.
+    </>
+  ),
+  coordsLabel,
+  coordsHint,
+  coordsHelpFirst,
+  children,
+  onCleared,
+  modeExitViaBack,
+  onModeChange,
+}: PlacesSearchProps, ref) {
   const [query, setQuery] = useState('')
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [open, setOpen] = useState(false)
@@ -63,8 +129,7 @@ export function PlacesSearch({
   // Option A. The same field, re-scoped: 'address' is the default; 'landmark'
   // and 'pluscode' relabel it (chip + placeholder); 'coords' swaps it for two
   // lat/long inputs. Keeps the fallback linear rather than a side path.
-  const [searchMode, setSearchMode] =
-    useState<'address' | 'landmark' | 'pluscode' | 'coords'>('address')
+  const [searchMode, setSearchMode] = useState<SearchMode>('address')
   // Manual coordinate entry (searchMode === 'coords').
   const [latInput, setLatInput] = useState('')
   const [lngInput, setLngInput] = useState('')
@@ -77,6 +142,8 @@ export function PlacesSearch({
   const [locateStatus, setLocateStatus] = useState<string | null>(null)
   // Index of the keyboard-highlighted suggestion (-1 = none).
   const [activeIndex, setActiveIndex] = useState(-1)
+  // Which fallback row is expanded, when they render as accordions.
+  const [openOption, setOpenOption] = useState<'landmark' | 'pluscode' | null>(null)
 
   const geocoderRef = useRef<google.maps.Geocoder | null>(null)
   const readyRef = useRef(false)
@@ -168,6 +235,12 @@ export function PlacesSearch({
     inputRef.current?.focus()
   }
 
+  // Let the step drive the way out of a re-scoped search — its Back button.
+  useImperativeHandle(ref, () => ({ resetSearch }), [])
+  useEffect(() => {
+    onModeChange?.(searchMode)
+  }, [searchMode])
+
   // Resolve a Place prediction to a full selection via the new Place API.
   const resolvePlacePrediction = async (
     prediction: google.maps.places.PlacePrediction,
@@ -196,6 +269,8 @@ export function PlacesSearch({
     setShowOptions(false)
     setActiveIndex(-1)
     window.clearTimeout(debounceRef.current)
+    // Emptying the field undoes the search, so anything it revealed goes away.
+    if (value.trim() === '') onCleared?.()
     if (value.trim().length < 3) {
       setSuggestions([])
       setOpen(false)
@@ -341,15 +416,64 @@ export function PlacesSearch({
     )
   }
 
+  // How to find your coordinates — above the lat/long fields or below them,
+  // depending on coordsHelpFirst.
+  const coordsHelp = (
+    <div className={`search-mode-help${coordsHelpFirst ? ' search-mode-help-first' : ''}`}>
+      <p className="search-mode-help-title">
+        <span className="search-mode-help-icon">
+          <InfoIcon />
+        </span>
+        How to find your coordinates
+      </p>
+      <ol>
+        <li>Open Google Maps and find your venue.</li>
+        <li>Tap and hold the exact spot to drop a pin.</li>
+        <li>
+          Copy the latitude and longitude shown, then enter them{' '}
+          {coordsHelpFirst ? 'below' : 'above'}.
+        </li>
+      </ol>
+    </div>
+  )
+
+  // "Or / Enter coordinates" — either the last item in the fallback panel, or,
+  // with coordsRowBelowSearch, a permanent row under the search field.
+  const coordsRow = (
+    <>
+      <div className="or-divider">
+        <span className="line" />
+        <span>Or</span>
+        <span className="line" />
+      </div>
+      <button type="button" className="result-option" onClick={startCoordsMode}>
+        <span className="result-option-icon">
+          <LocationIcon />
+        </span>
+        <span className="result-option-title">Enter coordinates</span>
+        <span className="result-option-chevron">
+          <ArrowRightIcon />
+        </span>
+      </button>
+    </>
+  )
+
   return (
     <div className="field">
       <div className="label-wrapper">
-        <label htmlFor="places-search">Search for the address</label>
-        {searchMode === 'address' ? (
-          <span className="hint">
-            Search the venue’s address or paste a <strong>Google Maps Plus Code</strong>.
-          </span>
+        {/* With a coordsLabel the search input is gone, so the label heads the
+            latitude/longitude fields instead and takes no htmlFor. */}
+        {searchMode === 'coords' && coordsLabel ? (
+          <>
+            <label>{coordsLabel}</label>
+            {coordsHint && <span className="hint">{coordsHint}</span>}
+          </>
         ) : (
+          <label htmlFor="places-search">{label}</label>
+        )}
+        {searchMode === 'address' ? (
+          <span className="hint">{hint}</span>
+        ) : modeExitViaBack ? null : (
           <span className="search-mode-tag">
             <LocationIcon size={16} />
             {searchMode === 'pluscode'
@@ -401,7 +525,9 @@ export function PlacesSearch({
             }
           />
         </div>
-        {open && (
+        {/* Only when there is something to show — an empty menu renders as a
+            stray grey line under the field. */}
+        {open && (loading || suggestions.length > 0) && (
           <div className="places-menu">
             {loading ? (
               <div className="places-spinner">Searching…</div>
@@ -441,6 +567,7 @@ export function PlacesSearch({
       )}
       {searchMode === 'coords' && (
         <div className="coords-entry">
+          {coordsHelpFirst && coordsHelp}
           <div className="coords-fields">
             <div className="coords-field">
               <label htmlFor="coord-lat">Latitude</label>
@@ -474,19 +601,7 @@ export function PlacesSearch({
               {coordsError}
             </p>
           )}
-          <div className="search-mode-help">
-            <p className="search-mode-help-title">
-              <span className="search-mode-help-icon">
-                <InfoIcon />
-              </span>
-              How to find your coordinates
-            </p>
-            <ol>
-              <li>Open Google Maps and find your venue.</li>
-              <li>Tap and hold the exact spot to drop a pin.</li>
-              <li>Copy the latitude and longitude shown, then enter them above.</li>
-            </ol>
-          </div>
+          {!coordsHelpFirst && coordsHelp}
           <button type="button" className="coords-submit" onClick={submitCoords}>
             Place pin on map
           </button>
@@ -511,7 +626,12 @@ export function PlacesSearch({
         </div>
       )}
       {searchMode === 'address' && (
-        <button type="button" className="locate-link" onClick={useMyLocation} disabled={locating}>
+        <button
+          type="button"
+          className={`locate-link${coordsRowBelowSearch ? ' locate-link-flush' : ''}`}
+          onClick={useMyLocation}
+          disabled={locating}
+        >
           {locating ? <SpinnerIcon /> : <LocationIcon />}
           {locating ? 'Getting your location…' : 'Use my current location'}
         </button>
@@ -533,11 +653,11 @@ export function PlacesSearch({
         </div>
       )}
       {(noResults || showOptions) && enableFallbackOptions && searchMode === 'address' && (
-        <div className="no-results" role="status">
+        <div
+          className={`no-results${coordsRowBelowSearch ? ' no-results-tight' : ''}`}
+          role="status"
+        >
           <p className="no-results-title">
-            <span className="no-results-icon">
-              <InfoIcon />
-            </span>
             {noResults ? 'Your search didn’t return any results' : 'Can’t find your address?'}
           </p>
           <p className="no-results-text">
@@ -545,6 +665,67 @@ export function PlacesSearch({
               ? 'Here are a few ways to find your venue:'
               : 'No problem — try one of these instead:'}
           </p>
+          {optionsAsAccordions ? (
+            <div className="no-results-options">
+              {(
+                [
+                  {
+                    key: 'landmark' as const,
+                    // Sized by width so the taller pin (4:3) matches the 22px
+                    // square Plus Code icon and the 20px coordinates icon.
+                    icon: <PinIcon size={16} color="currentColor" />,
+                    title: 'Search for a nearby landmark',
+                    body: (
+                      <p>
+                        Search for a nearby place, town, or landmark in the field above — you’ll
+                        drag the pin onto your exact venue next.
+                      </p>
+                    ),
+                  },
+                  {
+                    key: 'pluscode' as const,
+                    icon: <PlusCodeIcon size={22} />,
+                    title: 'Use a Google Maps Plus Code',
+                    body: (
+                      <>
+                        <ol>
+                          <li>Open Google Maps and find your venue.</li>
+                          <li>Tap and hold the exact spot to drop a pin.</li>
+                          <li>Copy the Plus Code shown (e.g. 9G5H+3M) and paste it above.</li>
+                        </ol>
+                        <a href="https://plus.codes/" target="_blank" rel="noreferrer">
+                          What’s a Plus Code?
+                        </a>
+                      </>
+                    ),
+                  },
+                ]
+              ).map((opt) => (
+                <div
+                  key={opt.key}
+                  className={`option-accordion${openOption === opt.key ? ' open' : ''}`}
+                >
+                  <button
+                    type="button"
+                    className="option-accordion-head"
+                    aria-expanded={openOption === opt.key}
+                    onClick={() => setOpenOption((o) => (o === opt.key ? null : opt.key))}
+                  >
+                    <span className="result-option-icon">{opt.icon}</span>
+                    <span className="result-option-title">{opt.title}</span>
+                    <span className="option-accordion-toggle">
+                      {openOption === opt.key ? <MinusIcon /> : <PlusIcon />}
+                    </span>
+                  </button>
+                  {openOption === opt.key && (
+                    <div className="option-accordion-body">{opt.body}</div>
+                  )}
+                </div>
+              ))}
+
+              {!coordsRowBelowSearch && coordsRow}
+            </div>
+          ) : (
           <div className="no-results-options">
             <button type="button" className="result-option" onClick={() => startModeSearch('landmark')}>
               <span className="result-option-icon">
@@ -590,8 +771,13 @@ export function PlacesSearch({
               </span>
             </button>
           </div>
+          )}
         </div>
+      )}
+      {children && <div className="search-slot">{children}</div>}
+      {coordsRowBelowSearch && searchMode === 'address' && (
+        <div className="coords-row-below">{coordsRow}</div>
       )}
     </div>
   )
-}
+})

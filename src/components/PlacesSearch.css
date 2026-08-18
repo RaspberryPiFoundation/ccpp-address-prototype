@@ -204,6 +204,12 @@
 .coords-entry .search-mode-help {
   margin-top: var(--space-2);
 }
+/* Above the lat/long fields: 16px clear on both sides, counting the 8px the
+   field group already puts above it. */
+.coords-entry .search-mode-help-first {
+  margin-top: var(--space-1);
+  margin-bottom: var(--space-2);
+}
 .coords-submit {
   margin-top: var(--space-2);
   padding: 10px 24px;
@@ -233,6 +239,10 @@
   font-size: var(--fs-1);
   font-weight: var(--fw-bold);
   cursor: pointer;
+}
+/* Drop the extra 4px so the space under the field matches the space above it. */
+.locate-link-flush {
+  margin-top: 0;
 }
 .locate-link:hover {
   text-decoration: underline;
@@ -274,11 +284,6 @@
   font-weight: var(--fw-bold);
   color: var(--rpf-text);
 }
-.no-results-icon {
-  display: flex;
-  flex-shrink: 0;
-  color: var(--alert-info);
-}
 .no-results-text {
   margin: 0 0 var(--space-2);
   font-size: var(--fs-1);
@@ -289,6 +294,90 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+}
+/* Panel pulled up under the search field: the field group's own 8px gap is the
+   whole spacing, so drop the margin that separates it elsewhere. */
+.no-results-tight {
+  margin-top: 0;
+}
+
+/* Slotted content between the search field and the coordinates row — spaced like
+   a step section rather than like the fields inside the search group. */
+.search-slot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: var(--space-1) 0;
+}
+
+/* The coordinates row when lifted out of the fallback panel, under the search. */
+.coords-row-below {
+  display: flex;
+  flex-direction: column;
+  /* Matches the space above the divider, so "Or" sits centred between the
+     locate link and the coordinates row. */
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+/* Expandable fallback rows: a header button plus its instructions. */
+.option-accordion {
+  background: var(--rpf-white);
+  border: 2px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.option-accordion-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: 12px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.option-accordion-head:hover {
+  background: var(--rpf-off-white);
+}
+.option-accordion.open {
+  border-color: var(--rpf-link-text);
+}
+/* Title sits directly in the row here (no text wrapper), so it takes the slack
+   and pushes the toggle/arrow to the right edge. */
+.option-accordion-head > .result-option-title,
+.result-option > .result-option-title {
+  flex: 1;
+}
+.option-accordion-toggle {
+  display: flex;
+  flex-shrink: 0;
+  margin-left: auto;
+  color: var(--rpf-link-text);
+}
+.option-accordion-body {
+  padding: 0 12px 12px 46px;
+  font-size: var(--fs-1);
+  line-height: var(--lh-15);
+  color: var(--rpf-text-secondary);
+}
+.option-accordion-body p {
+  margin: 0;
+}
+.option-accordion-body ol {
+  margin: 0;
+  padding-left: var(--space-3);
+}
+.option-accordion-body ol li {
+  margin-bottom: var(--space-05);
+}
+.option-accordion-body a {
+  display: inline-block;
+  margin-top: var(--space-1);
+  font-weight: var(--fw-bold);
+  color: var(--rpf-link-text);
 }
 .result-option {
   display: flex;

@@ -8,7 +8,7 @@ interface Props {
 }
 
 // The lead prototype shown on its own; every other variant sits in the accordion.
-const PRIMARY: Variant = 'search-first'
+const PRIMARY: Variant = 'search-first-v2'
 
 export function Home({ onSelect }: Props) {
   const primary = VARIANTS.find((v) => v.id === PRIMARY)!

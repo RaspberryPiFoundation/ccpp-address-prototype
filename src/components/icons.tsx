@@ -60,6 +60,30 @@ export function ChevronRightIcon({ size = 20 }: { size?: number }) {
   )
 }
 
+export function ArrowRightIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M5 12h14M13 6l6 6-6 6" />
+    </svg>
+  )
+}
+
+export function PlusIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  )
+}
+
+export function MinusIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+      <path d="M5 12h14" />
+    </svg>
+  )
+}
+
 export function InfoIcon() {
   return (
     <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -112,12 +136,14 @@ export function SpinnerIcon({ size = 18 }: { size?: number }) {
   )
 }
 
-export function PinIcon({ size = 42 }: { size?: number }) {
+// Defaults to the map-marker red; pass "currentColor" to have it inherit, e.g.
+// to sit alongside the blue UI icons.
+export function PinIcon({ size = 42, color = '#c9153b' }: { size?: number; color?: string }) {
   return (
     <svg width={size} height={size * (56 / 42)} viewBox="0 0 42 56" fill="none" aria-hidden>
       <path
         d="M21 0C9.4 0 0 9.4 0 21c0 15.75 21 35 21 35s21-19.25 21-35C42 9.4 32.6 0 21 0Z"
-        fill="#c9153b"
+        fill={color}
       />
       <circle cx="21" cy="21" r="8" fill="#fff" />
     </svg>
