@@ -137,6 +137,10 @@
   border: 1px solid var(--rpf-grey-300);
   border-radius: var(--radius-sm);
 }
+/* Above the field it needs the 16px clear underneath instead. */
+.search-mode-help-first {
+  margin-bottom: var(--space-2);
+}
 .search-mode-help-title {
   display: flex;
   align-items: center;
@@ -225,6 +229,16 @@
 .coords-submit:hover {
   opacity: 0.92;
 }
+/* The standard Button instead of the pill above (coordsSubmitAsButton), against
+   the right edge of the longitude field. The 8px below tops the card's 40px gap
+   up to the ~48px of clear space that gap leaves between text blocks, where the
+   line-height's leading adds to it — between two button edges it doesn't. */
+.coords-submit-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-2);
+  margin-bottom: var(--space-1);
+}
 
 .locate-link {
   display: inline-flex;
@@ -283,6 +297,10 @@
   line-height: var(--lh-15);
   font-weight: var(--fw-bold);
   color: var(--rpf-text);
+}
+/* Standing alone, the title carries the 16px the sub copy would have below it. */
+.no-results-title-only {
+  margin-bottom: var(--space-2);
 }
 .no-results-text {
   margin: 0 0 var(--space-2);

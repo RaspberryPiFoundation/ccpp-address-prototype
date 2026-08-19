@@ -203,6 +203,21 @@ button {
   gap: var(--space-3);
 }
 
+/* v3's step 1 only (StartApplicationV3). The design-system fields and alert bring
+   their own bottom margins on top of the flex gap, so the gaps either side of the
+   safeguarding alert render at 48px/40px. Drop the gap and set the spacing on the
+   children instead: 16px around the alert, with the gap between the two selects
+   left as it was. */
+.start-v3 .section-gap {
+  gap: 0;
+}
+.start-v3 .section-gap > *:not(:last-child) {
+  margin-bottom: var(--space-2);
+}
+.start-v3 .section-gap > *:first-child {
+  margin-bottom: calc(var(--space-3) * 2);
+}
+
 hr.divider {
   border: none;
   border-top: 1px solid var(--rpf-grey-150);

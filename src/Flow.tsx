@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { StartApplication } from './steps/StartApplication'
+import { StartApplicationV3 } from './steps/StartApplicationV3'
 import { FindVenue } from './steps/FindVenue'
 import { FindVenueRevealOnPin } from './steps/FindVenueRevealOnPin'
 import { FindVenueMapFirst } from './steps/FindVenueMapFirst'
 import { FindVenueSearchFirst } from './steps/FindVenueSearchFirst'
 import { FindVenueSearchFirstV2 } from './steps/FindVenueSearchFirstV2'
+import { FindVenueSearchFirstV3 } from './steps/FindVenueSearchFirstV3'
 import { FindVenueGuided } from './steps/FindVenueGuided'
 import { LeafletMap } from './components/LeafletMap'
 import { MapPicker } from './steps/MapPicker'
@@ -134,9 +136,12 @@ export function Flow({ variant, onExit }: Props) {
         <span className="variant-banner-title">{info.title}</span>
       </div>
 
-      {screen === 'start' && (
-        <StartApplication data={data} update={update} onContinue={() => setScreen('venue')} />
-      )}
+      {screen === 'start' &&
+        (variant === 'search-first-v3' ? (
+          <StartApplicationV3 data={data} update={update} onContinue={() => setScreen('venue')} />
+        ) : (
+          <StartApplication data={data} update={update} onContinue={() => setScreen('venue')} />
+        ))}
       {screen === 'venue' && variant === 'as-is' && <FindVenue {...findVenueCommon} />}
       {screen === 'venue' && variant === 'reveal-on-pin' && (
         <FindVenueRevealOnPin
@@ -153,6 +158,9 @@ export function Flow({ variant, onExit }: Props) {
       )}
       {screen === 'venue' && variant === 'search-first-v2' && (
         <FindVenueSearchFirstV2 {...findVenueCommon} onConfirmLocation={populateFromCoords} />
+      )}
+      {screen === 'venue' && variant === 'search-first-v3' && (
+        <FindVenueSearchFirstV3 {...findVenueCommon} onConfirmLocation={populateFromCoords} />
       )}
       {screen === 'venue' && variant === 'guided' && (
         <FindVenueGuided {...findVenueCommon} onConfirmLocation={populateFromCoords} />

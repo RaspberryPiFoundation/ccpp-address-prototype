@@ -8,10 +8,11 @@ interface Props {
 }
 
 // The lead prototype shown on its own; every other variant sits in the accordion.
-const PRIMARY: Variant = 'search-first-v2'
+// null means nothing is being led with, so every variant sits in the accordion.
+const PRIMARY: Variant | null = 'search-first-v3'
 
 export function Home({ onSelect }: Props) {
-  const primary = VARIANTS.find((v) => v.id === PRIMARY)!
+  const primary = VARIANTS.find((v) => v.id === PRIMARY)
   const others = VARIANTS.filter((v) => v.id !== PRIMARY)
 
   const card = (v: VariantInfo) => (
@@ -31,8 +32,10 @@ export function Home({ onSelect }: Props) {
       <div className="intro">
         <h1 className="title-lg">Venue address — prototype</h1>
         <p className="body">
-          A prototype of the “Where is the club venue?” step. Try the main approach below, or open
-          the list for other approaches.
+          A prototype of the “Where is the club venue?” step.
+          {primary
+            ? ' Try the main approach below, or open the list for other approaches.'
+            : ' Open the list to try one of the approaches.'}
         </p>
       </div>
 
@@ -48,13 +51,13 @@ export function Home({ onSelect }: Props) {
         </ul>
       </Alert>
 
-      <div className="variant-list">{card(primary)}</div>
+      {primary && <div className="variant-list">{card(primary)}</div>}
 
       {others.length > 0 && (
         <Accordion
           id="other-approaches"
           className=""
-          title="Other approaches to try"
+          title={primary ? 'Other approaches to try' : 'Approaches to try'}
           content={<div className="variant-list">{others.map(card)}</div>}
         />
       )}

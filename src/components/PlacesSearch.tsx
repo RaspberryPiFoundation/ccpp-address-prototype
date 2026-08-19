@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from 'react'
 import './PlacesSearch.css'
+import { Button } from './Button'
 import { SearchIcon, ErrorIcon, LocationIcon, SpinnerIcon, InfoIcon, ChevronRightIcon, PinIcon, PlusCodeIcon, CloseIcon, ArrowRightIcon, PlusIcon, MinusIcon } from './icons'
 import {
   loadGoogleMaps,
@@ -41,6 +42,12 @@ interface PlacesSearchProps {
    */
   optionsAsAccordions?: boolean
   /**
+   * Heads the options panel after a failed search, in place of "Your search
+   * didn't return any results" and the line under it — this is the whole
+   * introduction. The panel opened by "Can't see your address?" keeps its own.
+   */
+  noResultsTitle?: string
+  /**
    * Lift the "Enter coordinates" row out of the fallback panel to sit under the
    * search field, so it is offered up front rather than only after a failure.
    */
@@ -55,6 +62,39 @@ interface PlacesSearchProps {
   coordsHint?: ReactNode
   /** Put the "How to find your coordinates" help above the lat/long fields. */
   coordsHelpFirst?: boolean
+  /**
+   * Render "Place pin on map" as the app's standard Button — same styling as the
+   * step's own buttons — right-aligned under the longitude field, instead of the
+   * pill this component rolls itself.
+   */
+  coordsSubmitAsButton?: boolean
+  /**
+   * Offer the Plus Code fallback the way coordinate entry is offered: a row in
+   * the options panel that re-scopes the field to its own view — headed by
+   * plusCodeLabel with the how-to steps above the input — rather than an
+   * accordion holding the instructions in place.
+   */
+  plusCodeAsMode?: boolean
+  /** Label used in Plus Code mode. Falls back to the standard label. */
+  plusCodeLabel?: string
+  /** Hint under the label in Plus Code mode. Only shown with plusCodeLabel. */
+  plusCodeHint?: ReactNode
+  /**
+   * The same for the landmark fallback: a row that re-scopes the field to a view
+   * headed by landmarkLabel, rather than an accordion.
+   */
+  landmarkAsMode?: boolean
+  /**
+   * When a landmark or Plus Code search comes back empty, offer the other ways of
+   * placing the venue in the panel the address search uses, rather than only
+   * reporting the failure. The route being searched is left out, and the routes
+   * already tried — the address search among them — sit at the bottom.
+   */
+  modeFallbackOptions?: boolean
+  /** Label used in landmark mode. Falls back to the standard label. */
+  landmarkLabel?: string
+  /** Hint under the label in landmark mode. Only shown with landmarkLabel. */
+  landmarkHint?: ReactNode
   /**
    * Content slotted between the search field and the "or / Enter coordinates"
    * row — the map and location description once a search has succeeded.
@@ -106,6 +146,7 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
   countryCode,
   enableFallbackOptions,
   optionsAsAccordions,
+  noResultsTitle,
   coordsRowBelowSearch,
   label = 'Search for the address',
   hint = (
@@ -116,6 +157,14 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
   coordsLabel,
   coordsHint,
   coordsHelpFirst,
+  coordsSubmitAsButton,
+  plusCodeAsMode,
+  plusCodeLabel,
+  plusCodeHint,
+  landmarkAsMode,
+  landmarkLabel,
+  landmarkHint,
+  modeFallbackOptions,
   children,
   onCleared,
   modeExitViaBack,
@@ -130,6 +179,10 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
   // and 'pluscode' relabel it (chip + placeholder); 'coords' swaps it for two
   // lat/long inputs. Keeps the fallback linear rather than a side path.
   const [searchMode, setSearchMode] = useState<SearchMode>('address')
+  // The routes already left behind, oldest first. A failed search offers the
+  // others with these at the bottom, so nothing the user has been through
+  // outranks a route they haven't tried.
+  const [triedModes, setTriedModes] = useState<SearchMode[]>([])
   // Manual coordinate entry (searchMode === 'coords').
   const [latInput, setLatInput] = useState('')
   const [lngInput, setLngInput] = useState('')
@@ -193,8 +246,13 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
     setCoordsError(null)
   }
 
+  // Remember the route being left, so a later failed search can rank it below
+  // the ones still untried.
+  const rememberMode = () => setTriedModes((t) => (t.includes(searchMode) ? t : [...t, searchMode]))
+
   // Re-scope the same search field to a landmark or Plus Code search.
   const startModeSearch = (mode: 'landmark' | 'pluscode') => {
+    rememberMode()
     clearInputs()
     setSearchMode(mode)
     inputRef.current?.focus()
@@ -202,6 +260,7 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
 
   // Swap the search field for the two lat/long inputs.
   const startCoordsMode = () => {
+    rememberMode()
     clearInputs()
     setSearchMode('coords')
   }
@@ -230,6 +289,7 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
 
   // Back to the default name/address search.
   const resetSearch = () => {
+    rememberMode()
     clearInputs()
     setSearchMode('address')
     inputRef.current?.focus()
@@ -437,8 +497,93 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
     </div>
   )
 
-  // "Or / Enter coordinates" — either the last item in the fallback panel, or,
-  // with coordsRowBelowSearch, a permanent row under the search field.
+  // How to find your Plus Code — above the search field in Plus Code mode
+  // (plusCodeAsMode), matching the coordinate view; below it otherwise.
+  const plusCodeHelp = (
+    <div className={`search-mode-help${plusCodeAsMode ? ' search-mode-help-first' : ''}`}>
+      <p className="search-mode-help-title">
+        <span className="search-mode-help-icon">
+          <InfoIcon />
+        </span>
+        How to find your Plus Code
+      </p>
+      <ol>
+        <li>Open Google Maps and find your venue.</li>
+        <li>Tap and hold the exact spot to drop a pin.</li>
+        <li>
+          Copy the Plus Code shown (e.g. 9G5H+3M) and paste it{' '}
+          {plusCodeAsMode ? 'below' : 'above'}.
+        </li>
+      </ol>
+      <a href="https://plus.codes/" target="_blank" rel="noreferrer">
+        What’s a Plus Code?
+      </a>
+    </div>
+  )
+
+  // Every way of placing the venue, as a row that re-scopes the field. Icons are
+  // sized to look even: the pin is 4:3 so it goes by width to match the 22px
+  // square Plus Code icon and the 20px coordinates one.
+  const ROUTES: { key: SearchMode; icon: ReactNode; title: string; start: () => void }[] = [
+    {
+      key: 'landmark',
+      icon: <PinIcon size={16} color="currentColor" />,
+      title: 'Search for a nearby landmark',
+      start: () => startModeSearch('landmark'),
+    },
+    {
+      key: 'pluscode',
+      icon: <PlusCodeIcon size={22} />,
+      title: 'Use a Google Maps Plus Code',
+      start: () => startModeSearch('pluscode'),
+    },
+    {
+      key: 'coords',
+      icon: <LocationIcon />,
+      title: 'Enter coordinates',
+      start: startCoordsMode,
+    },
+    {
+      key: 'address',
+      icon: <SearchIcon />,
+      title: 'Search for an address',
+      start: resetSearch,
+    },
+  ]
+
+  const routeOption = (route: (typeof ROUTES)[number]) => (
+    <button key={route.key} type="button" className="result-option" onClick={route.start}>
+      <span className="result-option-icon">{route.icon}</span>
+      <span className="result-option-title">{route.title}</span>
+      <span className="result-option-chevron">
+        <ArrowRightIcon />
+      </span>
+    </button>
+  )
+
+  const route = (key: SearchMode) => ROUTES.find((r) => r.key === key)!
+
+  // The landmark and Plus Code options, when they re-scope the field rather than
+  // expanding in place. Landmark leads the panel; Plus Code follows it.
+  const landmarkOption = routeOption(route('landmark'))
+  const plusCodeOption = routeOption(route('pluscode'))
+
+  // The "Enter coordinates" option. In the fallback panel it's the last row,
+  // sitting flush under the other options; as a permanent row under the search
+  // field (coordsRowBelowSearch) an "or" divider separates it from the search.
+  const coordsOption = routeOption(route('coords'))
+
+  // After a failed search in a re-scoped field: the other ways of placing the
+  // venue, the ones not tried yet first and the ones already tried underneath,
+  // oldest first — so the route the user came in on sits at the bottom.
+  const remainingRoutes = () => {
+    const others = ROUTES.filter((r) => r.key !== searchMode)
+    return [
+      ...others.filter((r) => !triedModes.includes(r.key)),
+      ...triedModes.flatMap((m) => others.filter((r) => r.key === m)),
+    ]
+  }
+
   const coordsRow = (
     <>
       <div className="or-divider">
@@ -446,17 +591,17 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
         <span>Or</span>
         <span className="line" />
       </div>
-      <button type="button" className="result-option" onClick={startCoordsMode}>
-        <span className="result-option-icon">
-          <LocationIcon />
-        </span>
-        <span className="result-option-title">Enter coordinates</span>
-        <span className="result-option-chevron">
-          <ArrowRightIcon />
-        </span>
-      </button>
+      {coordsOption}
     </>
   )
+
+  // A failed search in a re-scoped field. With modeFallbackOptions it gets the
+  // same panel the address search does, listing the routes still open to the
+  // user; otherwise it says nothing, as it always has.
+  const modeSearchFailed =
+    noResults &&
+    ((landmarkAsMode && searchMode === 'landmark') ||
+      (plusCodeAsMode && searchMode === 'pluscode'))
 
   return (
     <div className="field">
@@ -467,6 +612,17 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
           <>
             <label>{coordsLabel}</label>
             {coordsHint && <span className="hint">{coordsHint}</span>}
+          </>
+        ) : searchMode === 'pluscode' && plusCodeLabel ? (
+          <>
+            {/* The search input is still here, so the label keeps its htmlFor. */}
+            <label htmlFor="places-search">{plusCodeLabel}</label>
+            {plusCodeHint && <span className="hint">{plusCodeHint}</span>}
+          </>
+        ) : searchMode === 'landmark' && landmarkLabel ? (
+          <>
+            <label htmlFor="places-search">{landmarkLabel}</label>
+            {landmarkHint && <span className="hint">{landmarkHint}</span>}
           </>
         ) : (
           <label htmlFor="places-search">{label}</label>
@@ -492,9 +648,16 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
           </span>
         )}
       </div>
+      {searchMode === 'pluscode' && plusCodeAsMode && plusCodeHelp}
       {searchMode !== 'coords' && (
         <div className="places" ref={containerRef}>
-          <div className={`places-box${noResults && !enableFallbackOptions ? ' error' : ''}`}>
+          <div
+            className={`places-box${
+              (noResults && !enableFallbackOptions) || (modeSearchFailed && !modeFallbackOptions)
+                ? ' error'
+                : ''
+            }`}
+          >
           <span className="search-icon">
             <SearchIcon />
           </span>
@@ -602,29 +765,20 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
             </p>
           )}
           {!coordsHelpFirst && coordsHelp}
-          <button type="button" className="coords-submit" onClick={submitCoords}>
-            Place pin on map
-          </button>
+          {coordsSubmitAsButton ? (
+            <div className="coords-submit-row">
+              <Button variant="primary" onClick={submitCoords}>
+                Place pin on map
+              </Button>
+            </div>
+          ) : (
+            <button type="button" className="coords-submit" onClick={submitCoords}>
+              Place pin on map
+            </button>
+          )}
         </div>
       )}
-      {searchMode === 'pluscode' && (
-        <div className="search-mode-help">
-          <p className="search-mode-help-title">
-            <span className="search-mode-help-icon">
-              <InfoIcon />
-            </span>
-            How to find your Plus Code
-          </p>
-          <ol>
-            <li>Open Google Maps and find your venue.</li>
-            <li>Tap and hold the exact spot to drop a pin.</li>
-            <li>Copy the Plus Code shown (e.g. 9G5H+3M) and paste it above.</li>
-          </ol>
-          <a href="https://plus.codes/" target="_blank" rel="noreferrer">
-            What’s a Plus Code?
-          </a>
-        </div>
-      )}
+      {searchMode === 'pluscode' && !plusCodeAsMode && plusCodeHelp}
       {searchMode === 'address' && (
         <button
           type="button"
@@ -652,21 +806,50 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
           </span>
         </div>
       )}
+      {modeSearchFailed && !modeFallbackOptions && (
+        <div className="error-message" role="alert">
+          <span className="icon">
+            <ErrorIcon />
+          </span>
+          <span>
+            {searchMode === 'pluscode'
+              ? 'Error: We couldn’t find that Plus Code. Check it and try again, or go back to try another way.'
+              : 'Error: We couldn’t find that place. Try a different landmark, or go back to try another way.'}
+          </span>
+        </div>
+      )}
+      {modeSearchFailed && modeFallbackOptions && (
+        <div className="no-results" role="status">
+          <p className="no-results-title no-results-title-only">
+            {noResultsTitle ?? 'Your search didn’t return any results'}
+          </p>
+          <div className="no-results-options">{remainingRoutes().map(routeOption)}</div>
+        </div>
+      )}
       {(noResults || showOptions) && enableFallbackOptions && searchMode === 'address' && (
         <div
           className={`no-results${coordsRowBelowSearch ? ' no-results-tight' : ''}`}
           role="status"
         >
-          <p className="no-results-title">
-            {noResults ? 'Your search didn’t return any results' : 'Can’t find your address?'}
-          </p>
-          <p className="no-results-text">
+          <p
+            className={`no-results-title${
+              noResults && noResultsTitle ? ' no-results-title-only' : ''
+            }`}
+          >
             {noResults
-              ? 'Here are a few ways to find your venue:'
-              : 'No problem — try one of these instead:'}
+              ? (noResultsTitle ?? 'Your search didn’t return any results')
+              : 'Can’t find your address?'}
           </p>
+          {!(noResults && noResultsTitle) && (
+            <p className="no-results-text">
+              {noResults
+                ? 'Here are a few ways to find your venue:'
+                : 'No problem — try one of these instead:'}
+            </p>
+          )}
           {optionsAsAccordions ? (
             <div className="no-results-options">
+              {landmarkAsMode && landmarkOption}
               {(
                 [
                   {
@@ -700,7 +883,15 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
                     ),
                   },
                 ]
-              ).map((opt) => (
+              )
+                // An option offered as its own view (plusCodeAsMode,
+                // landmarkAsMode) is a row below instead of an accordion.
+                .filter(
+                  (opt) =>
+                    !(plusCodeAsMode && opt.key === 'pluscode') &&
+                    !(landmarkAsMode && opt.key === 'landmark'),
+                )
+                .map((opt) => (
                 <div
                   key={opt.key}
                   className={`option-accordion${openOption === opt.key ? ' open' : ''}`}
@@ -723,7 +914,10 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
                 </div>
               ))}
 
-              {!coordsRowBelowSearch && coordsRow}
+              {plusCodeAsMode && plusCodeOption}
+              {/* Only reached by the v3 variant — v2 lifts this row out of the
+                  panel with coordsRowBelowSearch. */}
+              {!coordsRowBelowSearch && coordsOption}
             </div>
           ) : (
           <div className="no-results-options">
