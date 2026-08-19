@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { StartApplication } from './steps/StartApplication'
+import { StartApplicationV3 } from './steps/StartApplicationV3'
 import { FindVenue } from './steps/FindVenue'
 import { FindVenueRevealOnPin } from './steps/FindVenueRevealOnPin'
 import { FindVenueMapFirst } from './steps/FindVenueMapFirst'
@@ -135,9 +136,12 @@ export function Flow({ variant, onExit }: Props) {
         <span className="variant-banner-title">{info.title}</span>
       </div>
 
-      {screen === 'start' && (
-        <StartApplication data={data} update={update} onContinue={() => setScreen('venue')} />
-      )}
+      {screen === 'start' &&
+        (variant === 'search-first-v3' ? (
+          <StartApplicationV3 data={data} update={update} onContinue={() => setScreen('venue')} />
+        ) : (
+          <StartApplication data={data} update={update} onContinue={() => setScreen('venue')} />
+        ))}
       {screen === 'venue' && variant === 'as-is' && <FindVenue {...findVenueCommon} />}
       {screen === 'venue' && variant === 'reveal-on-pin' && (
         <FindVenueRevealOnPin
