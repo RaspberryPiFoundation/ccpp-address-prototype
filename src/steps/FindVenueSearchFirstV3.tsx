@@ -126,16 +126,8 @@ export function FindVenueSearchFirstV3({
         <h1 className="title-md" tabIndex={-1} ref={headingRef}>
           {locationConfirmed ? 'Confirm the venue’s address' : 'Where is the club venue?'}
         </h1>
-        {!locationConfirmed && (
-          <p className="body">
-            Pick an appropriate{' '}
-            <a href="http://rpf.io/cc-venue" target="_blank" rel="noreferrer">
-              venue for your club
-            </a>
-            .  Clubs need to run in public venues. You cannot run a club from a residential address,
-            like your home. Online clubs still need to provide a venue for safeguarding reasons.
-          </p>
-        )}
+        {/* The "pick an appropriate venue" guidance is on step 1; the heading is
+            the whole of this step's introduction. */}
       </div>
 
       <div className="section-gap">
