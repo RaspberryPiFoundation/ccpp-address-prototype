@@ -2,6 +2,7 @@
 // the "Where is the club venue?" step; everything else in the flow is shared.
 // See Home.tsx for the front page that launches them.
 export type Variant =
+  | 'search-first-v3'
   | 'search-first-v2'
   | 'as-is'
   | 'reveal-on-pin'
@@ -18,10 +19,16 @@ export interface VariantInfo {
 
 export const VARIANTS: VariantInfo[] = [
   {
+    id: 'search-first-v3',
+    title: 'Search-first, then map (v3)',
+    summary:
+      'A copy of “Search-first, then map (v2)” that we’re iterating on. Identical to it for now.',
+  },
+  {
     id: 'search-first-v2',
     title: 'Search-first, then map (v2)',
     summary:
-      'A copy of “Search-first, then map” that we’re iterating on. Identical to it for now.',
+      'A copy of “Search-first, then map” that we’re iterating on. The fallback options — nearby landmark, Plus Code and coordinate entry — are always visible under the search as accordions.',
   },
   {
     id: 'search-first',

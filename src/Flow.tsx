@@ -5,6 +5,7 @@ import { FindVenueRevealOnPin } from './steps/FindVenueRevealOnPin'
 import { FindVenueMapFirst } from './steps/FindVenueMapFirst'
 import { FindVenueSearchFirst } from './steps/FindVenueSearchFirst'
 import { FindVenueSearchFirstV2 } from './steps/FindVenueSearchFirstV2'
+import { FindVenueSearchFirstV3 } from './steps/FindVenueSearchFirstV3'
 import { FindVenueGuided } from './steps/FindVenueGuided'
 import { LeafletMap } from './components/LeafletMap'
 import { MapPicker } from './steps/MapPicker'
@@ -153,6 +154,9 @@ export function Flow({ variant, onExit }: Props) {
       )}
       {screen === 'venue' && variant === 'search-first-v2' && (
         <FindVenueSearchFirstV2 {...findVenueCommon} onConfirmLocation={populateFromCoords} />
+      )}
+      {screen === 'venue' && variant === 'search-first-v3' && (
+        <FindVenueSearchFirstV3 {...findVenueCommon} onConfirmLocation={populateFromCoords} />
       )}
       {screen === 'venue' && variant === 'guided' && (
         <FindVenueGuided {...findVenueCommon} onConfirmLocation={populateFromCoords} />
