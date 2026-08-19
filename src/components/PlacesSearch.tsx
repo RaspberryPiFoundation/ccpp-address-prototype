@@ -42,6 +42,12 @@ interface PlacesSearchProps {
    */
   optionsAsAccordions?: boolean
   /**
+   * Heads the options panel after a failed search, in place of "Your search
+   * didn't return any results" and the line under it — this is the whole
+   * introduction. The panel opened by "Can't see your address?" keeps its own.
+   */
+  noResultsTitle?: string
+  /**
    * Lift the "Enter coordinates" row out of the fallback panel to sit under the
    * search field, so it is offered up front rather than only after a failure.
    */
@@ -133,6 +139,7 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
   countryCode,
   enableFallbackOptions,
   optionsAsAccordions,
+  noResultsTitle,
   coordsRowBelowSearch,
   label = 'Search for the address',
   hint = (
@@ -777,14 +784,22 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
           className={`no-results${coordsRowBelowSearch ? ' no-results-tight' : ''}`}
           role="status"
         >
-          <p className="no-results-title">
-            {noResults ? 'Your search didn’t return any results' : 'Can’t find your address?'}
-          </p>
-          <p className="no-results-text">
+          <p
+            className={`no-results-title${
+              noResults && noResultsTitle ? ' no-results-title-only' : ''
+            }`}
+          >
             {noResults
-              ? 'Here are a few ways to find your venue:'
-              : 'No problem — try one of these instead:'}
+              ? (noResultsTitle ?? 'Your search didn’t return any results')
+              : 'Can’t find your address?'}
           </p>
+          {!(noResults && noResultsTitle) && (
+            <p className="no-results-text">
+              {noResults
+                ? 'Here are a few ways to find your venue:'
+                : 'No problem — try one of these instead:'}
+            </p>
+          )}
           {optionsAsAccordions ? (
             <div className="no-results-options">
               {landmarkAsMode && landmarkOption}

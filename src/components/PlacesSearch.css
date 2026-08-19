@@ -298,6 +298,10 @@
   font-weight: var(--fw-bold);
   color: var(--rpf-text);
 }
+/* Standing alone, the title carries the 16px the sub copy would have below it. */
+.no-results-title-only {
+  margin-bottom: var(--space-2);
+}
 .no-results-text {
   margin: 0 0 var(--space-2);
   font-size: var(--fs-1);
