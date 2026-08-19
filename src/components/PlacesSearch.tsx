@@ -56,6 +56,17 @@ interface PlacesSearchProps {
   /** Put the "How to find your coordinates" help above the lat/long fields. */
   coordsHelpFirst?: boolean
   /**
+   * Offer the Plus Code fallback the way coordinate entry is offered: a row in
+   * the options panel that re-scopes the field to its own view — headed by
+   * plusCodeLabel with the how-to steps above the input — rather than an
+   * accordion holding the instructions in place.
+   */
+  plusCodeAsMode?: boolean
+  /** Label used in Plus Code mode. Falls back to the standard label. */
+  plusCodeLabel?: string
+  /** Hint under the label in Plus Code mode. Only shown with plusCodeLabel. */
+  plusCodeHint?: ReactNode
+  /**
    * Content slotted between the search field and the "or / Enter coordinates"
    * row — the map and location description once a search has succeeded.
    */
@@ -116,6 +127,9 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
   coordsLabel,
   coordsHint,
   coordsHelpFirst,
+  plusCodeAsMode,
+  plusCodeLabel,
+  plusCodeHint,
   children,
   onCleared,
   modeExitViaBack,
@@ -437,6 +451,44 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
     </div>
   )
 
+  // How to find your Plus Code — above the search field in Plus Code mode
+  // (plusCodeAsMode), matching the coordinate view; below it otherwise.
+  const plusCodeHelp = (
+    <div className={`search-mode-help${plusCodeAsMode ? ' search-mode-help-first' : ''}`}>
+      <p className="search-mode-help-title">
+        <span className="search-mode-help-icon">
+          <InfoIcon />
+        </span>
+        How to find your Plus Code
+      </p>
+      <ol>
+        <li>Open Google Maps and find your venue.</li>
+        <li>Tap and hold the exact spot to drop a pin.</li>
+        <li>
+          Copy the Plus Code shown (e.g. 9G5H+3M) and paste it{' '}
+          {plusCodeAsMode ? 'below' : 'above'}.
+        </li>
+      </ol>
+      <a href="https://plus.codes/" target="_blank" rel="noreferrer">
+        What’s a Plus Code?
+      </a>
+    </div>
+  )
+
+  // The "Use a Google Maps Plus Code" option, when it re-scopes the field rather
+  // than expanding in place. Sits between the landmark option and coordinates.
+  const plusCodeOption = (
+    <button type="button" className="result-option" onClick={() => startModeSearch('pluscode')}>
+      <span className="result-option-icon">
+        <PlusCodeIcon size={22} />
+      </span>
+      <span className="result-option-title">Use a Google Maps Plus Code</span>
+      <span className="result-option-chevron">
+        <ArrowRightIcon />
+      </span>
+    </button>
+  )
+
   // The "Enter coordinates" option. In the fallback panel it's the last row,
   // sitting flush under the other options; as a permanent row under the search
   // field (coordsRowBelowSearch) an "or" divider separates it from the search.
@@ -473,6 +525,12 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
             <label>{coordsLabel}</label>
             {coordsHint && <span className="hint">{coordsHint}</span>}
           </>
+        ) : searchMode === 'pluscode' && plusCodeLabel ? (
+          <>
+            {/* The search input is still here, so the label keeps its htmlFor. */}
+            <label htmlFor="places-search">{plusCodeLabel}</label>
+            {plusCodeHint && <span className="hint">{plusCodeHint}</span>}
+          </>
         ) : (
           <label htmlFor="places-search">{label}</label>
         )}
@@ -497,6 +555,7 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
           </span>
         )}
       </div>
+      {searchMode === 'pluscode' && plusCodeAsMode && plusCodeHelp}
       {searchMode !== 'coords' && (
         <div className="places" ref={containerRef}>
           <div className={`places-box${noResults && !enableFallbackOptions ? ' error' : ''}`}>
@@ -612,24 +671,7 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
           </button>
         </div>
       )}
-      {searchMode === 'pluscode' && (
-        <div className="search-mode-help">
-          <p className="search-mode-help-title">
-            <span className="search-mode-help-icon">
-              <InfoIcon />
-            </span>
-            How to find your Plus Code
-          </p>
-          <ol>
-            <li>Open Google Maps and find your venue.</li>
-            <li>Tap and hold the exact spot to drop a pin.</li>
-            <li>Copy the Plus Code shown (e.g. 9G5H+3M) and paste it above.</li>
-          </ol>
-          <a href="https://plus.codes/" target="_blank" rel="noreferrer">
-            What’s a Plus Code?
-          </a>
-        </div>
-      )}
+      {searchMode === 'pluscode' && !plusCodeAsMode && plusCodeHelp}
       {searchMode === 'address' && (
         <button
           type="button"
@@ -705,7 +747,11 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
                     ),
                   },
                 ]
-              ).map((opt) => (
+              )
+                // With plusCodeAsMode the Plus Code option is a row of its own
+                // below, so it drops out of the accordions.
+                .filter((opt) => !(plusCodeAsMode && opt.key === 'pluscode'))
+                .map((opt) => (
                 <div
                   key={opt.key}
                   className={`option-accordion${openOption === opt.key ? ' open' : ''}`}
@@ -728,6 +774,7 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
                 </div>
               ))}
 
+              {plusCodeAsMode && plusCodeOption}
               {/* Only reached by the v3 variant — v2 lifts this row out of the
                   panel with coordsRowBelowSearch. */}
               {!coordsRowBelowSearch && coordsOption}

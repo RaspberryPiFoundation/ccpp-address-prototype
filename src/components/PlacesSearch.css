@@ -137,6 +137,10 @@
   border: 1px solid var(--rpf-grey-300);
   border-radius: var(--radius-sm);
 }
+/* Above the field it needs the 16px clear underneath instead. */
+.search-mode-help-first {
+  margin-bottom: var(--space-2);
+}
 .search-mode-help-title {
   display: flex;
   align-items: center;
