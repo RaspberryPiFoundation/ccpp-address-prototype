@@ -155,6 +155,9 @@ export function FindVenueSearchFirstV3({
               plusCodeAsMode
               plusCodeLabel="Use a Google Maps Plus Code"
               plusCodeHint="Enter the Plus Code for your club venue."
+              landmarkAsMode
+              landmarkLabel="Search for a nearby landmark"
+              landmarkHint="Search for a nearby place, town, or landmark — you’ll drag the pin onto your exact venue next."
               onCleared={() => setSearchDone(false)}
               modeExitViaBack
               onModeChange={(mode) => {

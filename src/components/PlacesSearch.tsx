@@ -67,6 +67,15 @@ interface PlacesSearchProps {
   /** Hint under the label in Plus Code mode. Only shown with plusCodeLabel. */
   plusCodeHint?: ReactNode
   /**
+   * The same for the landmark fallback: a row that re-scopes the field to a view
+   * headed by landmarkLabel, rather than an accordion.
+   */
+  landmarkAsMode?: boolean
+  /** Label used in landmark mode. Falls back to the standard label. */
+  landmarkLabel?: string
+  /** Hint under the label in landmark mode. Only shown with landmarkLabel. */
+  landmarkHint?: ReactNode
+  /**
    * Content slotted between the search field and the "or / Enter coordinates"
    * row — the map and location description once a search has succeeded.
    */
@@ -130,6 +139,9 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
   plusCodeAsMode,
   plusCodeLabel,
   plusCodeHint,
+  landmarkAsMode,
+  landmarkLabel,
+  landmarkHint,
   children,
   onCleared,
   modeExitViaBack,
@@ -475,6 +487,22 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
     </div>
   )
 
+  // The "Search for a nearby landmark" option, when it re-scopes the field rather
+  // than expanding in place. First of the three options.
+  const landmarkOption = (
+    <button type="button" className="result-option" onClick={() => startModeSearch('landmark')}>
+      <span className="result-option-icon">
+        {/* Sized by width so the taller pin (4:3) matches the 22px square Plus
+            Code icon and the 20px coordinates icon. */}
+        <PinIcon size={16} color="currentColor" />
+      </span>
+      <span className="result-option-title">Search for a nearby landmark</span>
+      <span className="result-option-chevron">
+        <ArrowRightIcon />
+      </span>
+    </button>
+  )
+
   // The "Use a Google Maps Plus Code" option, when it re-scopes the field rather
   // than expanding in place. Sits between the landmark option and coordinates.
   const plusCodeOption = (
@@ -530,6 +558,11 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
             {/* The search input is still here, so the label keeps its htmlFor. */}
             <label htmlFor="places-search">{plusCodeLabel}</label>
             {plusCodeHint && <span className="hint">{plusCodeHint}</span>}
+          </>
+        ) : searchMode === 'landmark' && landmarkLabel ? (
+          <>
+            <label htmlFor="places-search">{landmarkLabel}</label>
+            {landmarkHint && <span className="hint">{landmarkHint}</span>}
           </>
         ) : (
           <label htmlFor="places-search">{label}</label>
@@ -714,6 +747,7 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
           </p>
           {optionsAsAccordions ? (
             <div className="no-results-options">
+              {landmarkAsMode && landmarkOption}
               {(
                 [
                   {
@@ -748,9 +782,13 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
                   },
                 ]
               )
-                // With plusCodeAsMode the Plus Code option is a row of its own
-                // below, so it drops out of the accordions.
-                .filter((opt) => !(plusCodeAsMode && opt.key === 'pluscode'))
+                // An option offered as its own view (plusCodeAsMode,
+                // landmarkAsMode) is a row below instead of an accordion.
+                .filter(
+                  (opt) =>
+                    !(plusCodeAsMode && opt.key === 'pluscode') &&
+                    !(landmarkAsMode && opt.key === 'landmark'),
+                )
                 .map((opt) => (
                 <div
                   key={opt.key}
