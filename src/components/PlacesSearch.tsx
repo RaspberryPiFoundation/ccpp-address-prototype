@@ -437,8 +437,21 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
     </div>
   )
 
-  // "Or / Enter coordinates" — either the last item in the fallback panel, or,
-  // with coordsRowBelowSearch, a permanent row under the search field.
+  // The "Enter coordinates" option. In the fallback panel it's the last row,
+  // sitting flush under the other options; as a permanent row under the search
+  // field (coordsRowBelowSearch) an "or" divider separates it from the search.
+  const coordsOption = (
+    <button type="button" className="result-option" onClick={startCoordsMode}>
+      <span className="result-option-icon">
+        <LocationIcon />
+      </span>
+      <span className="result-option-title">Enter coordinates</span>
+      <span className="result-option-chevron">
+        <ArrowRightIcon />
+      </span>
+    </button>
+  )
+
   const coordsRow = (
     <>
       <div className="or-divider">
@@ -446,15 +459,7 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
         <span>Or</span>
         <span className="line" />
       </div>
-      <button type="button" className="result-option" onClick={startCoordsMode}>
-        <span className="result-option-icon">
-          <LocationIcon />
-        </span>
-        <span className="result-option-title">Enter coordinates</span>
-        <span className="result-option-chevron">
-          <ArrowRightIcon />
-        </span>
-      </button>
+      {coordsOption}
     </>
   )
 
@@ -723,7 +728,9 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
                 </div>
               ))}
 
-              {!coordsRowBelowSearch && coordsRow}
+              {/* Only reached by the v3 variant — v2 lifts this row out of the
+                  panel with coordsRowBelowSearch. */}
+              {!coordsRowBelowSearch && coordsOption}
             </div>
           ) : (
           <div className="no-results-options">
