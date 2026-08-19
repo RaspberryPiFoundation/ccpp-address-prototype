@@ -543,6 +543,14 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
     </>
   )
 
+  // A re-scoped landmark / Plus Code search has no options panel to fall back on
+  // — that panel is address-mode only — so a failed search would say nothing at
+  // all. Show it against the field instead, as the variants without the panel do.
+  const modeSearchError =
+    noResults &&
+    ((landmarkAsMode && searchMode === 'landmark') ||
+      (plusCodeAsMode && searchMode === 'pluscode'))
+
   return (
     <div className="field">
       <div className="label-wrapper">
@@ -591,7 +599,11 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
       {searchMode === 'pluscode' && plusCodeAsMode && plusCodeHelp}
       {searchMode !== 'coords' && (
         <div className="places" ref={containerRef}>
-          <div className={`places-box${noResults && !enableFallbackOptions ? ' error' : ''}`}>
+          <div
+            className={`places-box${
+              (noResults && !enableFallbackOptions) || modeSearchError ? ' error' : ''
+            }`}
+          >
           <span className="search-icon">
             <SearchIcon />
           </span>
@@ -729,6 +741,18 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
           <span>
             Error: We couldn’t find that address. Try a different search, or use one of the options
             below.
+          </span>
+        </div>
+      )}
+      {modeSearchError && (
+        <div className="error-message" role="alert">
+          <span className="icon">
+            <ErrorIcon />
+          </span>
+          <span>
+            {searchMode === 'pluscode'
+              ? 'Error: We couldn’t find that Plus Code. Check it and try again, or go back to try another way.'
+              : 'Error: We couldn’t find that place. Try a different landmark, or go back to try another way.'}
           </span>
         </div>
       )}
