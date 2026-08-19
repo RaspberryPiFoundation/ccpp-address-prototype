@@ -21,7 +21,7 @@ export const VARIANTS: VariantInfo[] = [
     id: 'search-first-v2',
     title: 'Search-first, then map (v2)',
     summary:
-      'A copy of “Search-first, then map” that we’re iterating on. Identical to it for now.',
+      'Only the address search shows to start. Once a search returns a result the map appears to fine-tune the pin, then you confirm the address. No coordinate entry.',
   },
   {
     id: 'search-first',
