@@ -152,6 +152,7 @@ export function FindVenueSearchFirstV3({
               coordsLabel="Enter coordinates"
               coordsHint="Enter the latitude and longitude of your club venue."
               coordsHelpFirst
+              coordsSubmitAsButton
               plusCodeAsMode
               plusCodeLabel="Use a Google Maps Plus Code"
               plusCodeHint="Enter the Plus Code for your club venue."

@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from 'react'
 import './PlacesSearch.css'
+import { Button } from './Button'
 import { SearchIcon, ErrorIcon, LocationIcon, SpinnerIcon, InfoIcon, ChevronRightIcon, PinIcon, PlusCodeIcon, CloseIcon, ArrowRightIcon, PlusIcon, MinusIcon } from './icons'
 import {
   loadGoogleMaps,
@@ -55,6 +56,12 @@ interface PlacesSearchProps {
   coordsHint?: ReactNode
   /** Put the "How to find your coordinates" help above the lat/long fields. */
   coordsHelpFirst?: boolean
+  /**
+   * Render "Place pin on map" as the app's standard Button — same styling as the
+   * step's own buttons — right-aligned under the longitude field, instead of the
+   * pill this component rolls itself.
+   */
+  coordsSubmitAsButton?: boolean
   /**
    * Offer the Plus Code fallback the way coordinate entry is offered: a row in
    * the options panel that re-scopes the field to its own view — headed by
@@ -136,6 +143,7 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
   coordsLabel,
   coordsHint,
   coordsHelpFirst,
+  coordsSubmitAsButton,
   plusCodeAsMode,
   plusCodeLabel,
   plusCodeHint,
@@ -711,9 +719,17 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
             </p>
           )}
           {!coordsHelpFirst && coordsHelp}
-          <button type="button" className="coords-submit" onClick={submitCoords}>
-            Place pin on map
-          </button>
+          {coordsSubmitAsButton ? (
+            <div className="coords-submit-row">
+              <Button variant="primary" onClick={submitCoords}>
+                Place pin on map
+              </Button>
+            </div>
+          ) : (
+            <button type="button" className="coords-submit" onClick={submitCoords}>
+              Place pin on map
+            </button>
+          )}
         </div>
       )}
       {searchMode === 'pluscode' && !plusCodeAsMode && plusCodeHelp}

@@ -229,6 +229,16 @@
 .coords-submit:hover {
   opacity: 0.92;
 }
+/* The standard Button instead of the pill above (coordsSubmitAsButton), against
+   the right edge of the longitude field. The 8px below tops the card's 40px gap
+   up to the ~48px of clear space that gap leaves between text blocks, where the
+   line-height's leading adds to it — between two button edges it doesn't. */
+.coords-submit-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-2);
+  margin-bottom: var(--space-1);
+}
 
 .locate-link {
   display: inline-flex;
