@@ -48,6 +48,14 @@ interface PlacesSearchProps {
    */
   noResultsTitle?: string
   /**
+   * Report an empty search in the app's error style: a red border on the field
+   * and the standard red error message under it, above "Use my current location".
+   * The options panel still follows, headed by noResultsTitle — so the error says
+   * what went wrong and the panel offers the ways on. Pairs with
+   * enableFallbackOptions / modeFallbackOptions, which own the panel itself.
+   */
+  noResultsAsError?: boolean
+  /**
    * Lift the "Enter coordinates" row out of the fallback panel to sit under the
    * search field, so it is offered up front rather than only after a failure.
    */
@@ -147,6 +155,7 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
   enableFallbackOptions,
   optionsAsAccordions,
   noResultsTitle,
+  noResultsAsError,
   coordsRowBelowSearch,
   label = 'Search for the address',
   hint = (
@@ -603,6 +612,10 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
     ((landmarkAsMode && searchMode === 'landmark') ||
       (plusCodeAsMode && searchMode === 'pluscode'))
 
+  // An empty search reported as an error rather than a grey panel title: the
+  // field goes red and the message sits under it, wherever the search was run.
+  const showNoResultsError = !!noResultsAsError && noResults
+
   return (
     <div className="field">
       <div className="label-wrapper">
@@ -653,7 +666,9 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
         <div className="places" ref={containerRef}>
           <div
             className={`places-box${
-              (noResults && !enableFallbackOptions) || (modeSearchFailed && !modeFallbackOptions)
+              (noResults && !enableFallbackOptions) ||
+              (modeSearchFailed && !modeFallbackOptions) ||
+              showNoResultsError
                 ? ' error'
                 : ''
             }`}
@@ -779,6 +794,15 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
         </div>
       )}
       {searchMode === 'pluscode' && !plusCodeAsMode && plusCodeHelp}
+      {/* Directly under the field it belongs to, above "Use my current location". */}
+      {showNoResultsError && (
+        <div className="error-message" role="alert">
+          <span className="icon">
+            <ErrorIcon />
+          </span>
+          <span>No results found</span>
+        </div>
+      )}
       {searchMode === 'address' && (
         <button
           type="button"
@@ -819,7 +843,9 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
         </div>
       )}
       {modeSearchFailed && modeFallbackOptions && (
-        <div className="no-results" role="status">
+        // The error message above announces the failure; the panel heads the ways
+        // on, so it doesn't take a live region of its own.
+        <div className="no-results" role={showNoResultsError ? undefined : 'status'}>
           <p className="no-results-title no-results-title-only">
             {noResultsTitle ?? 'Your search didn’t return any results'}
           </p>
@@ -829,7 +855,7 @@ export const PlacesSearch = forwardRef<PlacesSearchHandle, PlacesSearchProps>(
       {(noResults || showOptions) && enableFallbackOptions && searchMode === 'address' && (
         <div
           className={`no-results${coordsRowBelowSearch ? ' no-results-tight' : ''}`}
-          role="status"
+          role={showNoResultsError ? undefined : 'status'}
         >
           <p
             className={`no-results-title${
